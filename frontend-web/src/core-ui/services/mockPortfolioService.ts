@@ -1,37 +1,31 @@
 /**
  * mockPortfolioService.ts
  *
- * Servicio simulado que lee los JSON de /bank-simulator-mocks/.
- * En Next.js App Router, esta importación funciona en Server Components
- * porque `resolveJsonModule: true` está en tsconfig.
+ * Servicio simulado que lee el JSON de /bank-simulator-mocks/.
+ * El JSON está alineado con el contrato de Raúl:
+ *   RebalancePlan.java → contracts/mocks-contracts/rebalancer_base_mod1.json
  *
  * CUANDO EL BACKEND ESTÉ LISTO:
  *   - Eliminar este archivo.
- *   - Reemplazar los imports en los componentes por llamadas a apiClient.ts.
- *   - apiClient.ts ya tiene la estructura para hacer fetch a los endpoints de Raúl.
+ *   - En RebalanceDashboard.tsx, sustituir la llamada a fetchRebalancePlan
+ *     por: apiClient.get<RebalancePlan>(`/api/v1/portfolios/${portfolioId}/rebalance`)
+ *   - El puerto del backend de Raúl es 8081 (ver application.yml).
+ *     Definir en .env.local: NEXT_PUBLIC_API_BASE_URL=http://localhost:8081
  *
  * @module core-ui/services/mockPortfolioService
  */
 
-import type { CustodyPositionsResponse } from "@/core-ui/types/portfolio";
-
-// Importación directa del JSON mock (funciona gracias a resolveJsonModule en tsconfig)
-// El path relativo sale de src/ hacia la raíz del monorepo.
-// En producción, Next.js se ejecuta desde /frontend-web, así que ../../../ llega a la raíz.
-import custodyPositionsRaw from "../../../../bank-simulator-mocks/api-json-responses/custody_positions.json";
+import type { RebalancePlan } from "@/core-ui/types/portfolio";
+import rebalancePlanRaw from "../../../../bank-simulator-mocks/api-json-responses/custody_positions.json";
 
 /**
- * Simula una llamada GET /api/portfolios/{portfolioId}/positions
- *
- * El delay artificial imita latencia de red para que el skeleton loader
- * sea visible durante el desarrollo.
+ * Simula GET /api/v1/portfolios/{portfolioId}/rebalance
+ * El delay imita latencia de red para que el skeleton loader sea visible.
  */
-export async function fetchCustodyPositions(
+export async function fetchRebalancePlan(
   _portfolioId?: string,
   simulatedDelayMs = 600,
-): Promise<CustodyPositionsResponse> {
+): Promise<RebalancePlan> {
   await new Promise((resolve) => setTimeout(resolve, simulatedDelayMs));
-
-  // Cast tipado — el JSON está construido para satisfacer la interfaz exacta.
-  return custodyPositionsRaw as CustodyPositionsResponse;
+  return rebalancePlanRaw as unknown as RebalancePlan;
 }

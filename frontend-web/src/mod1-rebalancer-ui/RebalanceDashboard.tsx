@@ -3,43 +3,30 @@
 /**
  * RebalanceDashboard.tsx — Página principal del Módulo 1 (Balanceador Core)
  *
- * RESPONSABILIDADES:
- *   1. Orquestar la carga de datos desde mockPortfolioService.
- *   2. Gestionar el estado de carga / error con hooks de React.
- *   3. Renderizar la PositionsTableWithSlots con los datos cargados.
- *   4. En el futuro: aquí se integrarán TargetWeightsEditor y OrderPreviewModal.
+ * Consume el contrato de Raúl:
+ *   GET /api/v1/portfolios/{portfolioId}/rebalance → RebalancePlan
+ *   (port 8081, ver backend-core-java/src/main/resources/application.yml)
  *
- * NOTA SOBRE SLOTS:
- *   Este componente es también el lugar correcto donde los "bootstrap" de los
- *   módulos futuros deberían montarse para registrar sus slots.
- *   Cuando el Módulo 2 esté listo, el Compañero 3 añadirá aquí:
- *     <TaxModuleBootstrap />  ← registra TwoMonthWarningBadge en StatusBadgeSlot
+ * Mientras el backend no esté activo, usa mockPortfolioService → custody_positions.json
  *
  * @module mod1-rebalancer-ui/RebalanceDashboard
  */
 
 import React, { useCallback, useEffect, useState } from "react";
-import type { CustodyPositionsResponse } from "@/core-ui/types/portfolio";
-import { fetchCustodyPositions } from "@/core-ui/services/mockPortfolioService";
+import type { RebalancePlan } from "@/core-ui/types/portfolio";
+import { fetchRebalancePlan } from "@/core-ui/services/mockPortfolioService";
 import { PositionsTableWithSlots } from "@/mod1-rebalancer-ui/PositionsTableWithSlots";
 
-// ─── Estado interno del hook de datos ────────────────────────────────────────
+// ─── Hook: useRebalancePlan ───────────────────────────────────────────────────
 
-interface PortfolioDataState {
-  data: CustodyPositionsResponse | null;
+interface RebalancePlanState {
+  data: RebalancePlan | null;
   isLoading: boolean;
   error: string | null;
 }
 
-// ─── Hook: useCustodyPositions ────────────────────────────────────────────────
-
-/**
- * Hook que encapsula la carga de posiciones desde el mock service.
- * Cuando el backend esté listo, solo cambiará la implementación interna
- * de fetchCustodyPositions — este hook no necesitará modificarse.
- */
-function useCustodyPositions(portfolioId: string) {
-  const [state, setState] = useState<PortfolioDataState>({
+function useRebalancePlan(portfolioId: string) {
+  const [state, setState] = useState<RebalancePlanState>({
     data: null,
     isLoading: true,
     error: null,
@@ -48,13 +35,14 @@ function useCustodyPositions(portfolioId: string) {
   const load = useCallback(async () => {
     setState({ data: null, isLoading: true, error: null });
     try {
-      const response = await fetchCustodyPositions(portfolioId);
+      // PARA CONECTAR AL BACKEND REAL: sustituir fetchRebalancePlan por:
+      // import { portfolioApi } from "@/core-ui/api/apiClient";
+      // const response = await portfolioApi.getRebalancePlan(portfolioId);
+      const response = await fetchRebalancePlan(portfolioId);
       setState({ data: response, isLoading: false, error: null });
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : "Error desconocido al cargar las posiciones.";
+        err instanceof Error ? err.message : "Error desconocido al cargar el plan.";
       setState({ data: null, isLoading: false, error: message });
     }
   }, [portfolioId]);
@@ -69,18 +57,15 @@ function useCustodyPositions(portfolioId: string) {
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 interface RebalanceDashboardProps {
-  /** ID del portfolio a cargar. En Fase 1 usamos el ID del mock. */
   portfolioId?: string;
 }
 
-export function RebalanceDashboard({
-  portfolioId = "PTF-00142",
-}: RebalanceDashboardProps) {
-  const { data, isLoading, error, refetch } = useCustodyPositions(portfolioId);
+export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboardProps) {
+  const { data, isLoading, error, refetch } = useRebalancePlan(portfolioId);
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
-      {/* Barra de acciones del módulo */}
+      {/* Barra de acciones */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-white">Balanceador de Cartera</h1>
@@ -89,7 +74,6 @@ export function RebalanceDashboard({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Indicador de datos simulados */}
           <span className="inline-flex items-center gap-1.5 text-xs bg-brand-950 border border-brand-800 text-brand-300 px-3 py-1.5 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" aria-hidden="true" />
             Datos simulados (mock)
@@ -105,95 +89,40 @@ export function RebalanceDashboard({
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
             ].join(" ")}
           >
-            {isLoading ? (
-              <>
-                <RefreshIcon spinning />
-                Cargando...
-              </>
-            ) : (
-              <>
-                <RefreshIcon spinning={false} />
-                Actualizar
-              </>
-            )}
+            <RefreshIcon spinning={isLoading} />
+            {isLoading ? "Cargando..." : "Actualizar"}
           </button>
         </div>
       </div>
 
       {/*
-        ── Punto de extensión para módulos futuros ──────────────────────────
+        ── Punto de extensión para módulos futuros ───────────────────────────
         INSTRUCCIONES PARA COMPAÑERO 3 (Módulo 2 - Tax):
-          Añade aquí un componente <TaxModuleBootstrap /> que llame internamente
-          a useRegisterSlot("StatusBadgeSlot", TwoMonthWarningBadge).
-          NO modifiques PositionsTableWithSlots.tsx.
+          Añade aquí: <TaxModuleBootstrap />
+          que llame a useRegisterSlot("StatusBadgeSlot", TwoMonthWarningBadge)
 
         INSTRUCCIONES PARA COMPAÑERO 4 (Módulo 4 - Pledge):
-          Añade aquí un componente <PledgeModuleBootstrap /> que registre
-          useRegisterSlot("StatusBadgeSlot", PledgedLockIcon, { order: 2 }).
-          El order: 2 garantiza que el badge de pignoración aparece después del fiscal.
-        ─────────────────────────────────────────────────────────────────── */}
+          Añade aquí: <PledgeModuleBootstrap />
+          que llame a useRegisterSlot("StatusBadgeSlot", PledgedLockIcon, { order: 2 })
+                   y  useRegisterSlot("ActionRowSlot",   LtvHealthBar,    { order: 1 })
+        ──────────────────────────────────────────────────────────────────── */}
 
-      {/* Tabla principal de posiciones */}
-      {data ? (
-        <PositionsTableWithSlots
-          meta={data.meta}
-          positions={data.positions}
-          isLoading={isLoading}
-          error={error}
-        />
-      ) : isLoading ? (
-        // Mientras se carga por primera vez, pasamos un meta vacío y activamos isLoading
-        <PositionsTableWithSlots
-          meta={{
-            portfolioId: "",
-            clientId: "",
-            clientName: "",
-            baseCurrency: "EUR",
-            valuationDate: new Date().toISOString().split("T")[0] ?? "",
-            totalMarketValue: 0,
-            totalCostBasis: 0,
-            totalUnrealizedPnl: 0,
-            totalUnrealizedPnlPct: 0,
-          }}
-          positions={[]}
-          isLoading={true}
-          error={null}
-        />
-      ) : (
-        <PositionsTableWithSlots
-          meta={{
-            portfolioId: "",
-            clientId: "",
-            clientName: "",
-            baseCurrency: "EUR",
-            valuationDate: new Date().toISOString().split("T")[0] ?? "",
-            totalMarketValue: 0,
-            totalCostBasis: 0,
-            totalUnrealizedPnl: 0,
-            totalUnrealizedPnlPct: 0,
-          }}
-          positions={[]}
-          isLoading={false}
-          error={error}
-        />
-      )}
+      {/* Tabla principal */}
+      <PositionsTableWithSlots
+        plan={data}
+        isLoading={isLoading}
+        error={error}
+      />
     </div>
   );
 }
 
-// ─── Icono de refresco inline ─────────────────────────────────────────────────
-
 function RefreshIcon({ spinning }: { spinning: boolean }) {
   return (
     <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      width="14" height="14" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round"
       className={spinning ? "animate-spin" : ""}
       aria-hidden="true"
     >

@@ -20,7 +20,7 @@ import React from "react";
 import type { SlotRowProps } from "@/core-ui/SlotRegistry";
 
 export function LtvHealthBar({ position }: SlotRowProps) {
-  if (!position.flags.isPledged || !position.pledgeInfo) return null;
+  if (!position.flags?.isPledged || !position.pledgeInfo) return null;
 
   const { ltvRatio, ltvThresholdWarning, ltvThresholdLiquidation, pledgeContractId, loanId } =
     position.pledgeInfo;

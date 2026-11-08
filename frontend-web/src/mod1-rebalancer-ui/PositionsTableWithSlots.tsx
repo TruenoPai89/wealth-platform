@@ -3,134 +3,97 @@
 /**
  * PositionsTableWithSlots.tsx — Tabla maestra de posiciones del portfolio
  *
- * RESPONSABILIDAD (Módulo 1 — Balanceador Core):
- *   Renderizar las posiciones de custodia del cliente con sus datos básicos:
- *   nombre, clase de activo, peso actual vs. objetivo, valor de mercado y P&L.
+ * Consume el contrato de Raúl (RebalancePlan):
+ *   contracts/mocks-contracts/rebalancer_base_mod1.json
  *
- * EXTENSIBILIDAD (Patrón de Slots):
- *   Esta tabla NO conoce ni importa nada de los Módulos 2, 3 o 4.
- *   Los módulos futuros se "enchufan" registrando sus componentes en el SlotRegistry.
- *   Los huecos reservados son:
- *
- *   ┌─────────────────────────────────────────────────────────────────────┐
- *   │  [HeaderKpiSlot]  ← KPIs extra en la cabecera (Módulo 2: tax-loss) │
- *   ├──────┬──────────────────────────────────────┬───────────────────────┤
- *   │ ISIN │  Nombre / Clase  [StatusBadgeSlot]   │ Peso | Valor | P&L   │
- *   ├──────┴──────────────────────────────────────┴───────────────────────┤
- *   │  [ActionRowSlot]  ← acciones extra por fila (Módulo 2: TLH button) │
- *   └─────────────────────────────────────────────────────────────────────┘
- *
- * REGLA: No importar ni referenciar nada de /mod2-tax-ui, /mod3-irpf-ui
- *        o /mod4-pledge-ui en este archivo. NUNCA.
+ * SLOTS reservados para módulos futuros (NO importar nada de mod2/3/4 aquí):
+ *   "StatusBadgeSlot"  → badge por fila  (Mod2: alerta 2M, Mod4: candado LTV)
+ *   "ActionRowSlot"    → fila extra       (Mod4: LtvHealthBar)
+ *   "HeaderKpiSlot"    → KPIs cabecera   (Mod2: ahorro fiscal potencial)
  *
  * @module mod1-rebalancer-ui/PositionsTableWithSlots
  */
 
 import React from "react";
-import type { AssetPosition, AssetClass, PortfolioMeta } from "@/core-ui/types/portfolio";
+import type {
+  AssetPosition,
+  AssetClass,
+  RebalancePlan,
+  CashFlowSummary,
+} from "@/core-ui/types/portfolio";
 import { Slot } from "@/core-ui/SlotRegistry";
 import type { SlotRowProps, SlotHeaderProps } from "@/core-ui/SlotRegistry";
 
-// ─── Tipos ───────────────────────────────────────────────────────────────────
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface PositionsTableProps {
-  meta: PortfolioMeta;
-  positions: AssetPosition[];
-  /** Estado de carga: muestra skeletons si true */
+  plan: RebalancePlan | null;
   isLoading?: boolean;
-  /** Mensaje de error a mostrar si la carga falló */
   error?: string | null;
 }
 
-// ─── Helpers de formateo ─────────────────────────────────────────────────────
+// ─── Helpers de formateo ──────────────────────────────────────────────────────
 
-const EUR_FORMATTER = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+const EUR_FMT = new Intl.NumberFormat("es-ES", {
+  style: "currency", currency: "EUR",
+  minimumFractionDigits: 2, maximumFractionDigits: 2,
 });
-
-const PCT_FORMATTER = new Intl.NumberFormat("es-ES", {
+const PCT_FMT = new Intl.NumberFormat("es-ES", {
   style: "percent",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  minimumFractionDigits: 2, maximumFractionDigits: 2,
 });
 
-function formatCurrency(value: number): string {
-  return EUR_FORMATTER.format(value);
+function fmtEur(v: number) { return EUR_FMT.format(v); }
+function fmtPct(v: number) { return PCT_FMT.format(v); }  // v es 0–1
+function fmtDelta(v: number) {
+  const sign = v >= 0 ? "+" : "";
+  return `${sign}${(v * 100).toFixed(2).replace(".", ",")} pp`;
+}
+function fmtPnlPct(v: number) {
+  const sign = v >= 0 ? "+" : "";
+  return `${sign}${v.toFixed(2).replace(".", ",")} %`;
 }
 
-function formatPct(value: number): string {
-  // value es 0–1 (ej: 0.0409 → "4,09 %")
-  return PCT_FORMATTER.format(value);
-}
-
-function formatPnlPct(value: number): string {
-  // value es un porcentaje absoluto (ej: 19.93 → "+19,93 %")
-  const sign = value >= 0 ? "+" : "";
-  return `${sign}${value.toFixed(2).replace(".", ",")} %`;
-}
-
-// ─── Colores por clase de activo ─────────────────────────────────────────────
+// ─── Colores por clase de activo ──────────────────────────────────────────────
 
 const ASSET_CLASS_STYLES: Record<AssetClass, { bg: string; text: string; label: string }> = {
   EQUITY:       { bg: "bg-blue-500/15",   text: "text-blue-400",   label: "Renta Variable" },
   FIXED_INCOME: { bg: "bg-teal-500/15",   text: "text-teal-400",   label: "Renta Fija" },
+  COMMODITY:    { bg: "bg-yellow-500/15", text: "text-yellow-400", label: "Materia Prima" },
   CASH:         { bg: "bg-gray-500/15",   text: "text-gray-400",   label: "Efectivo" },
   ALTERNATIVE:  { bg: "bg-orange-500/15", text: "text-orange-400", label: "Alternativo" },
-  REAL_ESTATE:  { bg: "bg-yellow-500/15", text: "text-yellow-400", label: "Inmobiliario" },
+  REAL_ESTATE:  { bg: "bg-purple-500/15", text: "text-purple-400", label: "Inmobiliario" },
 };
 
-// ─── Sub-componente: Badge de clase de activo ─────────────────────────────────
+// ─── Sub-componentes ──────────────────────────────────────────────────────────
 
 function AssetClassBadge({ assetClass }: { assetClass: AssetClass }) {
-  const style = ASSET_CLASS_STYLES[assetClass] ?? ASSET_CLASS_STYLES.ALTERNATIVE;
+  const s = ASSET_CLASS_STYLES[assetClass] ?? ASSET_CLASS_STYLES.ALTERNATIVE;
   return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${style.bg} ${style.text}`}
-    >
-      {style.label}
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${s.bg} ${s.text}`}>
+      {s.label}
     </span>
   );
 }
 
-// ─── Sub-componente: Barra de peso (actual vs. objetivo) ─────────────────────
-
-interface WeightBarProps {
-  current: number;   // 0–1
-  target: number;    // 0–1
-}
-
-function WeightBar({ current, target }: WeightBarProps) {
+function WeightBar({ current, target }: { current: number; target: number }) {
   const deviation = current - target;
-  const isOver = deviation > 0.005;
+  const isOver  = deviation >  0.005;
   const isUnder = deviation < -0.005;
-  const barColor = isOver
-    ? "bg-semantic-warning"
-    : isUnder
-      ? "bg-blue-500"
-      : "bg-semantic-gain";
+  const barColor = isOver ? "bg-semantic-warning" : isUnder ? "bg-blue-500" : "bg-semantic-gain";
+  const textColor = isOver ? "text-semantic-warning" : isUnder ? "text-blue-400" : "text-semantic-gain";
 
   return (
-    <div className="flex flex-col gap-1 min-w-[100px]">
+    <div className="flex flex-col gap-1 min-w-[120px]">
       <div className="flex justify-between text-xs">
-        <span className={isOver ? "text-semantic-warning" : isUnder ? "text-blue-400" : "text-semantic-gain"}>
-          {formatPct(current)}
-        </span>
-        <span className="text-gray-500">
-          obj. {formatPct(target)}
-        </span>
+        <span className={textColor}>{fmtPct(current)}</span>
+        <span className="text-gray-500">obj. {fmtPct(target)}</span>
       </div>
-      {/* Barra compuesta: fondo gris (objetivo), relleno de color (actual) */}
       <div className="relative h-1.5 bg-surface-overlay rounded-full overflow-hidden w-full">
-        {/* Marcador de objetivo */}
         <div
           className="absolute top-0 bottom-0 w-0.5 bg-gray-500 z-10"
           style={{ left: `${Math.min(target * 100, 100)}%` }}
-          title={`Objetivo: ${formatPct(target)}`}
         />
-        {/* Barra de peso actual */}
         <div
           className={`h-full rounded-full transition-all duration-300 ${barColor}`}
           style={{ width: `${Math.min(current * 100, 100)}%` }}
@@ -140,188 +103,173 @@ function WeightBar({ current, target }: WeightBarProps) {
   );
 }
 
-// ─── Sub-componente: Celda de P&L ────────────────────────────────────────────
+function DeltaBadge({ delta }: { delta: number }) {
+  if (Math.abs(delta) < 0.001) {
+    return <span className="text-xs text-gray-600">Sin cambio</span>;
+  }
+  const isPositive = delta > 0;
+  return (
+    <span className={`text-xs font-medium ${isPositive ? "text-semantic-gain" : "text-semantic-loss"}`}>
+      {fmtDelta(delta)}
+    </span>
+  );
+}
 
-function PnlCell({ unrealized, unrealizedPct }: { unrealized: number; unrealizedPct: number }) {
-  const isPositive = unrealized >= 0;
-  const colorClass = isPositive ? "text-semantic-gain" : "text-semantic-loss";
+function OrderBadge({ position }: { position: AssetPosition }) {
+  if (!position.order) return null;
+  const isBuy = position.order.side === "BUY";
+  return (
+    <span className={[
+      "inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold",
+      isBuy
+        ? "bg-semantic-gain/15 text-semantic-gain border border-semantic-gain/30"
+        : "bg-semantic-loss/15 text-semantic-loss border border-semantic-loss/30",
+    ].join(" ")}>
+      {isBuy ? "▲" : "▼"} {isBuy ? "COMPRAR" : "VENDER"}{" "}
+      {position.order.quantity.toLocaleString("es-ES", { maximumFractionDigits: 2 })} uds.
+    </span>
+  );
+}
 
+function PnlCell({ position }: { position: AssetPosition }) {
+  if (!position.pnl) {
+    // Sin datos de P&L del backend base — mostrar valor deltaValue como referencia
+    const delta = position.deltaValue;
+    const color = delta >= 0 ? "text-semantic-gain" : "text-semantic-loss";
+    return (
+      <div className="flex flex-col items-end">
+        <span className={`text-xs ${color}`}>{fmtEur(Math.abs(delta))}</span>
+        <span className="text-xs text-gray-600">{delta >= 0 ? "a comprar" : "a vender"}</span>
+      </div>
+    );
+  }
+  const { unrealized, unrealizedPct } = position.pnl;
+  const color = unrealized >= 0 ? "text-semantic-gain" : "text-semantic-loss";
   return (
     <div className="flex flex-col items-end">
-      <span className={`text-sm font-medium ${colorClass}`}>
-        {unrealized === 0 ? "—" : formatCurrency(unrealized)}
+      <span className={`text-sm font-medium ${color}`}>
+        {unrealized === 0 ? "—" : fmtEur(unrealized)}
       </span>
       {unrealizedPct !== 0 && (
-        <span className={`text-xs ${colorClass} opacity-80`}>
-          {formatPnlPct(unrealizedPct)}
-        </span>
+        <span className={`text-xs ${color} opacity-80`}>{fmtPnlPct(unrealizedPct)}</span>
       )}
     </div>
   );
 }
 
-// ─── Sub-componente: Fila de posición ────────────────────────────────────────
+// ─── Fila de posición ─────────────────────────────────────────────────────────
 
-interface PositionRowProps {
-  position: AssetPosition;
-  isEven: boolean;
-}
-
-function PositionRow({ position, isEven }: PositionRowProps) {
-  const rowSlotProps: SlotRowProps = { position };
+function PositionRow({ position, isEven }: { position: AssetPosition; isEven: boolean }) {
+  const slotProps: SlotRowProps = { position };
+  const displayId = position.ticker ?? position.isin ?? position.instrumentId;
 
   return (
     <>
-      <tr
-        className={[
-          "border-b border-surface-border",
-          "hover:bg-surface-overlay/50 transition-colors duration-100",
-          isEven ? "bg-surface-base/30" : "",
-        ].join(" ")}
-      >
-        {/* Columna: Ticker / Nombre / Clase */}
+      <tr className={[
+        "border-b border-surface-border hover:bg-surface-overlay/50 transition-colors",
+        isEven ? "bg-surface-base/30" : "",
+      ].join(" ")}>
+        {/* Activo */}
         <td className="px-4 py-3">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-sm text-white font-semibold">
-                {position.ticker}
-              </span>
+              <span className="font-mono text-sm text-white font-semibold">{displayId}</span>
               <AssetClassBadge assetClass={position.assetClass} />
-              {/* ── SLOT: StatusBadgeSlot ────────────────────────────────
-                  Los módulos futuros inyectan aquí sus badges de estado.
-                  Ejemplos: TwoMonthWarningBadge (Mod2), PledgedLockIcon (Mod4).
-                  Si nadie registra nada → este slot renderiza null silenciosamente.
+              {/* ── SLOT: StatusBadgeSlot ───────────────────────────────────
+                  Módulo 2 → TwoMonthWarningBadge
+                  Módulo 4 → PledgedLockIcon
+                  Si nadie registra nada → null silencioso
               ─────────────────────────────────────────────────────────── */}
-              <Slot<SlotRowProps>
-                name="StatusBadgeSlot"
-                slotProps={rowSlotProps}
-              />
+              <Slot<SlotRowProps> name="StatusBadgeSlot" slotProps={slotProps} />
             </div>
             <span className="text-xs text-gray-400 truncate max-w-xs" title={position.name}>
               {position.name}
             </span>
-            <span className="text-xs text-gray-600 font-mono">
-              {position.isin !== "CASH_EUR" ? position.isin : "—"}
-            </span>
+            {position.isin && (
+              <span className="text-xs text-gray-600 font-mono">{position.isin}</span>
+            )}
           </div>
         </td>
 
-        {/* Columna: Peso actual vs. objetivo */}
+        {/* Peso actual / objetivo / delta */}
         <td className="px-4 py-3">
-          <WeightBar current={position.currentWeight} target={position.targetWeight} />
+          <div className="flex flex-col gap-1.5">
+            <WeightBar current={position.currentWeight} target={position.targetWeight} />
+            <DeltaBadge delta={position.deltaWeight} />
+          </div>
         </td>
 
-        {/* Columna: Valor de mercado */}
-        <td className="px-4 py-3 text-right">
-          <div className="flex flex-col items-end">
-            <span className="text-sm text-white font-medium">
-              {formatCurrency(position.currentValue)}
+        {/* Valor mercado + orden propuesta */}
+        <td className="px-4 py-3">
+          <div className="flex flex-col gap-1 items-end">
+            <span className="text-sm text-white font-medium font-mono">
+              {fmtEur(position.marketValue)}
             </span>
             <span className="text-xs text-gray-500">
-              {position.quantity.toLocaleString("es-ES")} uds. · {position.currency}
+              {position.quantity.toLocaleString("es-ES", { maximumFractionDigits: 2 })} uds.
             </span>
+            <OrderBadge position={position} />
           </div>
         </td>
 
-        {/* Columna: P&L no realizado */}
+        {/* P&L / movimiento */}
         <td className="px-4 py-3">
-          <PnlCell
-            unrealized={position.pnl.unrealized}
-            unrealizedPct={position.pnl.unrealizedPct}
-          />
+          <PnlCell position={position} />
         </td>
       </tr>
 
       {/* ── SLOT: ActionRowSlot ────────────────────────────────────────────
-          Fila extra debajo de cada posición para acciones adicionales.
-          Ejemplos: botón "Tax-Loss Harvesting" (Mod2), selector de lotes (Mod3).
-          Renderiza una celda que abarca todas las columnas.
-          Si nadie registra nada → esta fila no se renderiza en absoluto.
+          Módulo 4 → LtvHealthBar (barra de salud del préstamo lombardo)
+          Si nadie registra nada → esta celda queda vacía y es invisible
       ─────────────────────────────────────────────────────────────────── */}
-      <ActionRowSlotWrapper position={position} />
+      <tr className="border-b border-surface-border/40">
+        <td colSpan={4} className="px-4 pb-2 pt-0">
+          <Slot<SlotRowProps> name="ActionRowSlot" slotProps={slotProps} />
+        </td>
+      </tr>
     </>
   );
 }
 
-/** Envuelve el ActionRowSlot en una fila de tabla solo si hay contenido registrado */
-function ActionRowSlotWrapper({ position }: { position: AssetPosition }) {
-  const slotProps: SlotRowProps = { position };
-  return (
-    <tr className="border-b border-surface-border/40">
-      <td colSpan={4} className="px-4 pb-2 pt-0">
-        <Slot<SlotRowProps>
-          name="ActionRowSlot"
-          slotProps={slotProps}
-        />
-      </td>
-    </tr>
-  );
-}
-
-// ─── Sub-componente: Skeleton loader ─────────────────────────────────────────
+// ─── Skeleton loader ──────────────────────────────────────────────────────────
 
 function SkeletonRow() {
   return (
     <tr className="border-b border-surface-border animate-pulse">
-      <td className="px-4 py-3">
-        <div className="flex flex-col gap-2">
-          <div className="h-4 bg-surface-overlay rounded w-20" />
-          <div className="h-3 bg-surface-overlay rounded w-48" />
-          <div className="h-3 bg-surface-overlay rounded w-32" />
-        </div>
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-4 bg-surface-overlay rounded w-full" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="flex flex-col items-end gap-1">
-          <div className="h-4 bg-surface-overlay rounded w-24" />
-          <div className="h-3 bg-surface-overlay rounded w-16" />
-        </div>
-      </td>
-      <td className="px-4 py-3">
-        <div className="flex flex-col items-end gap-1">
-          <div className="h-4 bg-surface-overlay rounded w-20" />
-          <div className="h-3 bg-surface-overlay rounded w-14" />
-        </div>
-      </td>
+      {[48, 96, 24, 20].map((w, i) => (
+        <td key={i} className="px-4 py-3">
+          <div className={`h-4 bg-surface-overlay rounded w-${w}`} />
+        </td>
+      ))}
     </tr>
   );
 }
 
-// ─── Sub-componente: Cabecera con KPI summary ────────────────────────────────
+// ─── Cabecera con KPIs ────────────────────────────────────────────────────────
 
-interface TableHeaderProps {
-  meta: PortfolioMeta;
-}
-
-function TableHeader({ meta }: TableHeaderProps) {
-  const isPositivePnl = meta.totalUnrealizedPnl >= 0;
+function TableHeader({ plan }: { plan: RebalancePlan }) {
   const headerSlotProps: SlotHeaderProps = {
-    totalValue: meta.totalMarketValue,
-    baseCurrency: meta.baseCurrency,
+    totalValue: plan.totalValue,
+    baseCurrency: plan.baseCurrency,
   };
 
   return (
     <div className="flex flex-col gap-4 mb-6">
-      {/* Título y fecha de valoración */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-white">
-            Posiciones de Custodia
-          </h2>
+          <h2 className="text-xl font-semibold text-white">Posiciones de Cartera</h2>
           <p className="text-sm text-gray-500 mt-0.5">
-            {meta.clientName} · Portfolio{" "}
-            <span className="font-mono text-gray-400">{meta.portfolioId}</span>
+            Portfolio{" "}
+            <span className="font-mono text-gray-400">{plan.portfolioId}</span>
+            {" · "}Cliente{" "}
+            <span className="font-mono text-gray-400">{plan.clientId}</span>
           </p>
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-600">Valoración</p>
           <p className="text-sm text-gray-400">
-            {new Date(meta.valuationDate).toLocaleDateString("es-ES", {
-              day: "2-digit",
-              month: "long",
-              year: "numeric",
+            {new Date(plan.asOf).toLocaleDateString("es-ES", {
+              day: "2-digit", month: "long", year: "numeric",
             })}
           </p>
         </div>
@@ -329,78 +277,82 @@ function TableHeader({ meta }: TableHeaderProps) {
 
       {/* KPIs principales */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiCard label="Valor Total" value={fmtEur(plan.totalValue)} accent="neutral" />
+        <KpiCard label="Efectivo Actual" value={fmtEur(plan.cashFlow.cashBefore)} accent="neutral" />
         <KpiCard
-          label="Valor Total"
-          value={formatCurrency(meta.totalMarketValue)}
-          accent="neutral"
+          label="Efectivo Tras Rebalanceo"
+          value={fmtEur(plan.cashFlow.cashAfter)}
+          sub={plan.cashFlow.netCashFlow >= 0 ? `+${fmtEur(plan.cashFlow.netCashFlow)}` : fmtEur(plan.cashFlow.netCashFlow)}
+          accent={plan.cashFlow.netCashFlow >= 0 ? "gain" : "warning"}
         />
         <KpiCard
-          label="Coste Total"
-          value={formatCurrency(meta.totalCostBasis)}
-          accent="neutral"
-        />
-        <KpiCard
-          label="P&L No Realizado"
-          value={formatCurrency(meta.totalUnrealizedPnl)}
-          sub={formatPnlPct(meta.totalUnrealizedPnlPct)}
-          accent={isPositivePnl ? "gain" : "loss"}
-        />
-        <KpiCard
-          label="Divisa Base"
-          value={meta.baseCurrency}
+          label="Órdenes"
+          value={`${plan.orders.length} operaciones`}
+          sub={`${plan.orders.filter(o => o.side === "BUY").length} compras · ${plan.orders.filter(o => o.side === "SELL").length} ventas`}
           accent="neutral"
         />
       </div>
 
       {/* ── SLOT: HeaderKpiSlot ─────────────────────────────────────────────
-          KPIs adicionales de módulos futuros se inyectan aquí.
-          Ejemplo: "Ahorro fiscal potencial" del Módulo 2.
-          Si nadie registra nada → este slot no renderiza nada.
+          Módulo 2 → KPI de ahorro fiscal potencial
+          Si nadie registra nada → invisible
       ─────────────────────────────────────────────────────────────────── */}
-      <Slot<SlotHeaderProps>
-        name="HeaderKpiSlot"
-        slotProps={headerSlotProps}
-      />
+      <Slot<SlotHeaderProps> name="HeaderKpiSlot" slotProps={headerSlotProps} />
     </div>
   );
 }
 
-// ─── Sub-componente: KPI Card ─────────────────────────────────────────────────
-
-interface KpiCardProps {
-  label: string;
-  value: string;
-  sub?: string;
+function KpiCard({ label, value, sub, accent }: {
+  label: string; value: string; sub?: string;
   accent: "gain" | "loss" | "neutral" | "warning";
-}
-
-function KpiCard({ label, value, sub, accent }: KpiCardProps) {
-  const accentClass = {
-    gain:    "text-semantic-gain",
-    loss:    "text-semantic-loss",
-    warning: "text-semantic-warning",
-    neutral: "text-white",
-  }[accent];
-
+}) {
+  const c = { gain: "text-semantic-gain", loss: "text-semantic-loss", warning: "text-semantic-warning", neutral: "text-white" }[accent];
   return (
     <div className="bg-surface-raised border border-surface-border rounded-lg px-4 py-3">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <p className={`text-base font-semibold font-mono ${accentClass}`}>{value}</p>
-      {sub && (
-        <p className={`text-xs mt-0.5 ${accentClass} opacity-80`}>{sub}</p>
-      )}
+      <p className={`text-base font-semibold font-mono ${c}`}>{value}</p>
+      {sub && <p className={`text-xs mt-0.5 ${c} opacity-80`}>{sub}</p>}
     </div>
   );
 }
 
-// ─── Componente principal: PositionsTableWithSlots ───────────────────────────
+// ─── Panel de flujo de caja ───────────────────────────────────────────────────
 
-export function PositionsTableWithSlots({
-  meta,
-  positions,
-  isLoading = false,
-  error = null,
-}: PositionsTableProps) {
+function CashFlowPanel({ cashFlow }: { cashFlow: CashFlowSummary }) {
+  return (
+    <div className="bg-surface-raised border border-surface-border rounded-xl px-5 py-4 mt-4">
+      <h3 className="text-sm font-semibold text-gray-400 mb-3">Flujo de Caja del Rebalanceo</h3>
+      <div className="flex flex-wrap gap-6 text-sm">
+        <div>
+          <p className="text-xs text-gray-600">Efectivo inicial</p>
+          <p className="font-mono text-white">{fmtEur(cashFlow.cashBefore)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-600">Total ventas</p>
+          <p className="font-mono text-semantic-gain">+{fmtEur(cashFlow.sellTotal)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-600">Total compras</p>
+          <p className="font-mono text-semantic-loss">-{fmtEur(cashFlow.buyTotal)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-600">Flujo neto</p>
+          <p className={`font-mono font-semibold ${cashFlow.netCashFlow >= 0 ? "text-semantic-gain" : "text-semantic-loss"}`}>
+            {cashFlow.netCashFlow >= 0 ? "+" : ""}{fmtEur(cashFlow.netCashFlow)}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-600">Efectivo final</p>
+          <p className="font-mono text-white font-semibold">{fmtEur(cashFlow.cashAfter)}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
+
+export function PositionsTableWithSlots({ plan, isLoading = false, error = null }: PositionsTableProps) {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -415,81 +367,53 @@ export function PositionsTableWithSlots({
 
   return (
     <div className="flex flex-col gap-0">
-      {/* Cabecera con KPIs */}
-      <TableHeader meta={meta} />
+      {/* Cabecera */}
+      {plan && <TableHeader plan={plan} />}
 
-      {/* Contenedor de la tabla */}
+      {/* Tabla */}
       <div className="bg-surface-raised border border-surface-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm" aria-label="Tabla de posiciones de custodia">
-            {/* Cabecera de columnas */}
+          <table className="w-full text-sm" aria-label="Tabla de posiciones de cartera">
             <thead>
               <tr className="border-b border-surface-border bg-surface-overlay/50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Activo
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[160px]">
-                  Peso Actual / Objetivo
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Valor Mercado
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  P&amp;L No Realizado
-                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Activo</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[160px]">Peso · Delta</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Valor · Orden</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">P&amp;L / Movimiento</th>
               </tr>
             </thead>
-
-            {/* Cuerpo */}
             <tbody>
               {isLoading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <SkeletonRow key={`skeleton-${i}`} />
-                  ))
-                : positions.map((position, index) => (
-                    <PositionRow
-                      key={position.isin}
-                      position={position}
-                      isEven={index % 2 === 0}
-                    />
+                ? Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
+                : (plan?.positions ?? []).map((pos, i) => (
+                    <PositionRow key={pos.instrumentId} position={pos} isEven={i % 2 === 0} />
                   ))}
             </tbody>
-
-            {/* Footer con totales */}
-            {!isLoading && positions.length > 0 && (
+            {!isLoading && plan && plan.positions.length > 0 && (
               <tfoot>
                 <tr className="border-t-2 border-surface-border bg-surface-overlay/30">
                   <td className="px-4 py-3 text-xs text-gray-500 font-semibold uppercase tracking-wider">
-                    Total — {positions.length} posiciones
+                    Total — {plan.positions.length} posiciones
                   </td>
                   <td className="px-4 py-3" />
-                  <td className="px-4 py-3 text-right">
-                    <span className="text-sm font-semibold text-white font-mono">
-                      {formatCurrency(meta.totalMarketValue)}
-                    </span>
+                  <td className="px-4 py-3 text-right font-mono font-semibold text-white text-sm">
+                    {fmtEur(plan.totalValue)}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <PnlCell
-                      unrealized={meta.totalUnrealizedPnl}
-                      unrealizedPct={meta.totalUnrealizedPnlPct}
-                    />
-                  </td>
+                  <td className="px-4 py-3" />
                 </tr>
               </tfoot>
             )}
           </table>
         </div>
-
-        {/* Estado vacío */}
-        {!isLoading && positions.length === 0 && (
+        {!isLoading && (!plan || plan.positions.length === 0) && (
           <div className="flex flex-col items-center justify-center py-16 gap-2">
             <p className="text-gray-500 font-medium">No hay posiciones registradas</p>
-            <p className="text-gray-600 text-sm">
-              Importa datos desde un bróker para comenzar.
-            </p>
           </div>
         )}
       </div>
+
+      {/* Panel de flujo de caja */}
+      {!isLoading && plan && <CashFlowPanel cashFlow={plan.cashFlow} />}
     </div>
   );
 }

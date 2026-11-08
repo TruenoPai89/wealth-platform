@@ -1,24 +1,27 @@
 /**
  * apiClient.ts
  *
- * Cliente HTTP base para los endpoints REST del backend Java (Raúl).
+ * Cliente HTTP para los endpoints REST del backend Java (Raúl).
+ * Puerto: 8081 (ver backend-core-java/src/main/resources/application.yml)
  *
- * ESTADO ACTUAL: PENDIENTE — El contrato OpenAPI (/contracts/openapi-core.yaml)
- * aún no ha sido definido. Este archivo es un esqueleto preparado.
+ * ENDPOINT DISPONIBLE (Módulo 1):
+ *   GET /api/v1/portfolios/{portfolioId}/rebalance → RebalancePlan
  *
- * CUANDO EL CONTRATO ESTÉ LISTO:
- *   1. Definir BASE_URL en .env.local: NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
- *   2. Implementar los métodos get/post/put/delete con fetch nativo de Next.js.
- *   3. Reemplazar los imports de mockPortfolioService por los de este cliente.
+ * PARA ACTIVAR:
+ *   Crear frontend-web/.env.local con:
+ *     NEXT_PUBLIC_API_BASE_URL=http://localhost:8081
+ *   Luego en RebalanceDashboard.tsx reemplazar fetchRebalancePlan (mock)
+ *   por: apiClient.get<RebalancePlan>(`/api/v1/portfolios/${portfolioId}/rebalance`)
  *
  * @module core-ui/api/apiClient
  */
+
+import type { RebalancePlan } from "@/core-ui/types/portfolio";
 
 const BASE_URL = process.env["NEXT_PUBLIC_API_BASE_URL"] ?? "";
 
 /**
  * Wrapper de fetch tipado. Lanza un error descriptivo si la respuesta no es 2xx.
- * Preparado para adjuntar JWT de autenticación cuando el backend lo requiera.
  */
 async function request<T>(
   endpoint: string,
@@ -27,7 +30,7 @@ async function request<T>(
   if (!BASE_URL) {
     throw new Error(
       "[apiClient] NEXT_PUBLIC_API_BASE_URL no está definida. " +
-        "Usa mockPortfolioService mientras el backend no esté disponible.",
+        "Añade NEXT_PUBLIC_API_BASE_URL=http://localhost:8081 en .env.local.",
     );
   }
 
@@ -51,7 +54,7 @@ async function request<T>(
   return response.json() as Promise<T>;
 }
 
-// ─── Helpers públicos (descomentarlos cuando el contrato esté listo) ─────────
+// ─── Helpers públicos ─────────────────────────────────────────────────────────
 
 export const apiClient = {
   get: <T>(endpoint: string, options?: Omit<RequestInit, "method">) =>
@@ -67,15 +70,15 @@ export const apiClient = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+};
 
-  put: <T>(
-    endpoint: string,
-    body: unknown,
-    options?: Omit<RequestInit, "method" | "body">,
-  ) =>
-    request<T>(endpoint, {
-      ...options,
-      method: "PUT",
-      body: JSON.stringify(body),
-    }),
+// ─── Helpers de dominio (usar cuando el backend esté activo) ─────────────────
+
+export const portfolioApi = {
+  /**
+   * GET /api/v1/portfolios/{portfolioId}/rebalance
+   * Devuelve el plan de rebalanceo completo (RebalancePlan).
+   */
+  getRebalancePlan: (portfolioId: string) =>
+    apiClient.get<RebalancePlan>(`/api/v1/portfolios/${portfolioId}/rebalance`),
 };

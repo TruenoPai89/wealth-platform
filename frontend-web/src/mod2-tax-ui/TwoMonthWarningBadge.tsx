@@ -26,7 +26,7 @@ import type { SlotRowProps } from "@/core-ui/SlotRegistry";
 
 export function TwoMonthWarningBadge({ position }: SlotRowProps) {
   // Solo renderiza si esta posición tiene el flag activo
-  if (!position.flags.taxWarning2Month) return null;
+  if (!position.flags?.taxWarning2Month) return null;
 
   return (
     <span
