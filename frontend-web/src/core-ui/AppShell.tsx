@@ -131,6 +131,7 @@ const NAV_ITEMS: NavItem[] = [
     label: "Optimizador Fiscal",
     icon: <IconTax />,
     modulePhase: 2,
+    href: "/fiscal",
   },
   {
     id: "irpf",

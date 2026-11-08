@@ -92,6 +92,26 @@ export interface TaxLotsSummary {
   newestAcquisitionDate: string;
 }
 
+// ─── Resumen fiscal Módulo 2 — enriquecido desde el backend tax endpoint ──────
+
+/**
+ * Datos fiscales para una posición, calculados por el Módulo 2 del backend.
+ * Se pueblan en TaxModuleBootstrap.tsx mediante GET /api/v1/tax/.../estimate.
+ * Son opcionales: si el Módulo 2 no está disponible, el campo es undefined.
+ */
+export interface PositionTaxSummary {
+  /** Plusvalía (+) o minusvalía (-) estimada para la orden de venta. */
+  taxableGainLoss: number;
+  /** Impuesto estimado según tramos IRPF (19-28 %). Siempre ≥ 0. */
+  estimatedTaxCost: number;
+  /** Número de lotes FIFO que se consumirían. */
+  affectedLots: number;
+  /** true si la minusvalía quedaría diferida por la regla de los 2 meses. */
+  twoMonthRuleViolation: boolean;
+  /** Mensaje descriptivo de la advertencia (null si no aplica). */
+  warning: string | null;
+}
+
 // ─── P&L — exclusivo del frontend (Módulo 3) ─────────────────────────────────
 
 export interface PositionPnl {
@@ -156,6 +176,8 @@ export interface AssetPosition {
   pledgeInfo?: PledgeInfo | null;
   /** Resumen de lotes fiscales. Módulos 2 y 3. */
   taxLotsSummary?: TaxLotsSummary | null;
+  /** Módulo 2: coste fiscal calculado por el backend para la orden de venta de esta posición. */
+  taxSummary?: PositionTaxSummary | null;
 }
 
 // ─── Resumen de flujo de caja (CashFlowSummary de RebalancePlan.java) ────────

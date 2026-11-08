@@ -11,12 +11,11 @@
  *
  * CÓMO SE CONECTA A LA TABLA (Patrón de Slots):
  *   Este componente NO se importa en PositionsTableWithSlots.tsx.
- *   En su lugar, el bootstrap del módulo hace:
- *     useRegisterSlot("StatusBadgeSlot", TwoMonthWarningBadge, { order: 1 });
+ *   TaxModuleBootstrap.tsx llama a:
+ *     useRegisterSlot("StatusBadgeSlot", TwoMonthWarningBadge, { order: 1 })
  *   Y el Slot renderiza este badge automáticamente para cada fila donde
- *   position.flags.taxWarning2Month === true.
- *
- * ESTADO ACTUAL: Implementación completa. Pendiente de registrar en RebalanceDashboard.
+ *   position.flags.taxWarning2Month === true O donde el backend Módulo 2
+ *   ha confirmado twoMonthRuleViolation === true.
  *
  * @module mod2-tax-ui/TwoMonthWarningBadge
  */
@@ -25,8 +24,16 @@ import React from "react";
 import type { SlotRowProps } from "@/core-ui/SlotRegistry";
 
 export function TwoMonthWarningBadge({ position }: SlotRowProps) {
-  // Solo renderiza si esta posición tiene el flag activo
-  if (!position.flags?.taxWarning2Month) return null;
+  // Prioridad 1: flag confirmado por backend Módulo 2 (twoMonthRuleViolation)
+  const backendViolation = position.taxSummary?.twoMonthRuleViolation === true;
+  // Prioridad 2: flag del mock / snapshot de OpenJEV (taxWarning2Month)
+  const mockWarning = position.flags?.taxWarning2Month === true;
+
+  if (!backendViolation && !mockWarning) return null;
+
+  const tooltipText =
+    position.taxSummary?.warning ??
+    "Lotes con menos de 2 meses de antigüedad — La venta con pérdida no sería deducible (Art. 33.5 LIRPF)";
 
   return (
     <span
@@ -35,11 +42,12 @@ export function TwoMonthWarningBadge({ position }: SlotRowProps) {
         "text-xs font-semibold",
         "bg-semantic-warning/15 text-semantic-warning",
         "border border-semantic-warning/30",
+        "cursor-help",
       ].join(" ")}
-      title="Lotes con menos de 2 meses de antigüedad — La venta con pérdida no sería deducible (Art. 33.5 LIRPF)"
+      title={tooltipText}
       aria-label="Alerta fiscal: regla de los 2 meses"
     >
-      {/* Icono de reloj */}
+      {/* Icono reloj */}
       <svg
         width="10"
         height="10"

@@ -41,6 +41,8 @@ import { PortfolioViewToggle } from "@/mod1-rebalancer-ui/PortfolioViewToggle";
 import { PositionsTableWithSlots } from "@/mod1-rebalancer-ui/PositionsTableWithSlots";
 import { RebalanceOrdersPanel } from "@/mod1-rebalancer-ui/RebalanceOrdersPanel";
 import { TargetWeightsEditor } from "@/mod1-rebalancer-ui/TargetWeightsEditor";
+import { TaxModuleBootstrap } from "@/mod2-tax-ui/TaxModuleBootstrap";
+import type { AssetPosition } from "@/core-ui/types/portfolio";
 
 // ─── Hook: usePortfolio ───────────────────────────────────────────────────────
 
@@ -93,6 +95,10 @@ const BUTTON_BASE = [
 export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboardProps) {
   const { plan, isLoading, error, refetch } = usePortfolio(portfolioId);
 
+  // Módulo 2: posiciones enriquecidas con taxSummary por TaxModuleBootstrap.
+  // Mientras no llegan, se usan las posiciones originales del plan.
+  const [enrichedPositions, setEnrichedPositions] = useState<AssetPosition[] | null>(null);
+
   // Las órdenes solo se muestran tras pulsar «Rebalancear» (o guardar una meta nueva).
   const [showOrders, setShowOrders] = useState(false);
   const [editingTargets, setEditingTargets] = useState(false);
@@ -105,10 +111,13 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
   const [lastExecution, setLastExecution] = useState<RebalanceExecution | null>(null);
 
   // La vista se deriva del plan en cada render: alternar no vuelve a llamar al backend.
-  const displayPlan = useMemo(
-    () => (plan ? toDisplayPlan(plan, viewMode) : null),
-    [plan, viewMode],
-  );
+  // Si el Módulo 2 ha enriquecido las posiciones, se usan esas (con taxSummary).
+  const displayPlan = useMemo(() => {
+    if (!plan) return null;
+    const base = toDisplayPlan(plan, viewMode);
+    if (!enrichedPositions) return base;
+    return { ...base, positions: enrichedPositions };
+  }, [plan, viewMode, enrichedPositions]);
 
   async function handleRebalance() {
     if (USE_MOCK) {
@@ -247,16 +256,20 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
       )}
 
       {/*
-        ── Punto de extensión para módulos futuros ───────────────────────────
-        INSTRUCCIONES PARA COMPAÑERO 3 (Módulo 2 - Tax):
-          Añade aquí: <TaxModuleBootstrap />
-          que llame a useRegisterSlot("StatusBadgeSlot", TwoMonthWarningBadge)
+        ── Módulo 2: Optimizador Fiscal ─────────────────────────────────────
+        TaxModuleBootstrap registra el badge "StatusBadgeSlot", carga los datos
+        fiscales del backend y expone el botón + drawer de Tax Harvesting.
 
         INSTRUCCIONES PARA COMPAÑERO 4 (Módulo 4 - Pledge):
           Añade aquí: <PledgeModuleBootstrap />
           que llame a useRegisterSlot("StatusBadgeSlot", PledgedLockIcon, { order: 2 })
                    y  useRegisterSlot("ActionRowSlot",   LtvHealthBar,    { order: 1 })
         ──────────────────────────────────────────────────────────────────── */}
+      <TaxModuleBootstrap
+        plan={plan}
+        portfolioId={portfolioId}
+        onPositionsEnriched={setEnrichedPositions}
+      />
 
       {/* Tabla principal */}
       <PositionsTableWithSlots plan={displayPlan} isLoading={isLoading} error={error} />
