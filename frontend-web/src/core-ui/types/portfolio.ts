@@ -12,6 +12,8 @@
  * @module core-ui/types/portfolio
  */
 
+import type { Performance } from "@/core-ui/types/rebalancePlan";
+
 // ─── Enumeraciones (alineadas con AssetClass.java) ───────────────────────────
 
 export type AssetClass =
@@ -129,6 +131,14 @@ export interface AssetPosition {
   postTradeValue: number;
   postTradeWeight: number;
 
+  // ── Schema 1.1 del backend: coste base y P&L no realizado (los calcula el backend) ──
+  /** Coste de adquisición TOTAL de la posición. */
+  costBasis?: number;
+  /** marketValue - costBasis */
+  unrealizedPnLAmount?: number;
+  /** Porcentaje absoluto sobre el coste (10.64 = +10,64 %) */
+  unrealizedPnLPercent?: number;
+
   // ── Campos exclusivos del frontend (opcionales hasta que los módulos los rellenen) ──
   /** Ticker corto. No viene del backend base. */
   ticker?: string;
@@ -176,6 +186,8 @@ export interface RebalancePlan {
   /** Lista de órdenes consolidadas (SELL primero, luego BUY) */
   orders: EmbeddedOrder[];
   cashFlow: CashFlowSummary;
+  /** Schema 1.1: coste total y P&L de la cartera (tarjetas superiores). Ausente en el mock antiguo. */
+  performance?: Performance;
 }
 
 // ─── Alias de compatibilidad hacia atrás (usado en mockPortfolioService) ─────

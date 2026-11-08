@@ -30,18 +30,32 @@ class CashFlowRebalancerTest {
         return new BigDecimal(v);
     }
 
-    private static AssetPosition pos(String id, AssetClass cls, String qty, String price) {
-        return new AssetPosition(id, id, id, cls, bd(qty), bd(price), "EUR");
+    /** Posicion con coste base total explicito. */
+    private static AssetPosition pos(String id, AssetClass cls, String qty, String price, String cost) {
+        return new AssetPosition(id, id, id, cls, bd(qty), bd(price), "EUR", bd(cost));
     }
 
-    /** Misma cartera que client_portfolio_jev.json: total 130.000 EUR. */
+    /** Posicion sin plusvalia (coste = valor de mercado). */
+    private static AssetPosition pos(String id, AssetClass cls, String qty, String price) {
+        return pos(id, cls, qty, price, bd(qty).multiply(bd(price)).toPlainString());
+    }
+
+    /** Misma cartera que client_portfolio_jev.json: total 130.000 EUR, coste 117.500 (con caja). */
     private static Portfolio portfolio() {
         return new Portfolio("PF-001", "CLI-001", "EUR", Instant.parse("2026-11-08T09:00:00Z"), List.of(
-                pos(MSCI, AssetClass.EQUITY, "400", "95.00"),
-                pos(SP500, AssetClass.EQUITY, "300", "105.00"),
-                pos(BOND, AssetClass.FIXED_INCOME, "250", "118.00"),
-                pos(GOLD, AssetClass.COMMODITY, "100", "215.00"),
+                pos(MSCI, AssetClass.EQUITY, "400", "95.00", "34000.00"),
+                pos(SP500, AssetClass.EQUITY, "300", "105.00", "27000.00"),
+                pos(BOND, AssetClass.FIXED_INCOME, "250", "118.00", "29000.00"),
+                pos(GOLD, AssetClass.COMMODITY, "100", "215.00", "18000.00"),
                 AssetPosition.cash("EUR", bd("9500.00"))));
+    }
+
+    private static RebalancePlan.PositionRow row(RebalancePlan plan, String id) {
+        return plan.positions().stream().filter(r -> r.instrumentId().equals(id)).findFirst().orElseThrow();
+    }
+
+    private static RebalancePlan.ProjectedPosition proj(RebalancePlan plan, String id) {
+        return plan.projectedPositions().stream().filter(r -> r.instrumentId().equals(id)).findFirst().orElseThrow();
     }
 
     private static Map<String, BigDecimal> targets() {
@@ -59,28 +73,28 @@ class CashFlowRebalancerTest {
         assertThat(plan.totalValue()).isEqualByComparingTo("130000.00");
         assertThat(plan.orders()).hasSize(4);
 
-        // MSCI: objetivo 45.500 vs actual 38.000 -> comprar 7.500 / 95 = 78,947368 uds
+        // MSCI: objetivo 45.500 vs actual 38.000 -> comprar 7.500 / 95 = 78,9474 uds
         RebalanceOrder msci = orderFor(plan, MSCI);
         assertThat(msci.side()).isEqualTo(Side.BUY);
-        assertThat(msci.quantity()).isEqualByComparingTo("78.947368");
+        assertThat(msci.quantity()).isEqualByComparingTo("78.9474");
         assertThat(msci.amount()).isEqualByComparingTo("7500.00");
 
-        // S&P 500: objetivo 26.000 vs actual 31.500 -> vender 5.500 / 105 = 52,380952 uds
+        // S&P 500: objetivo 26.000 vs actual 31.500 -> vender 5.500 / 105 = 52,3810 uds
         RebalanceOrder sp = orderFor(plan, SP500);
         assertThat(sp.side()).isEqualTo(Side.SELL);
-        assertThat(sp.quantity()).isEqualByComparingTo("52.380952");
+        assertThat(sp.quantity()).isEqualByComparingTo("52.3810");
         assertThat(sp.amount()).isEqualByComparingTo("5500.00");
 
-        // Renta fija: objetivo 39.000 vs actual 29.500 -> comprar 9.500 / 118 = 80,508475 uds
+        // Renta fija: objetivo 39.000 vs actual 29.500 -> comprar 9.500 / 118 = 80,5085 uds
         RebalanceOrder bond = orderFor(plan, BOND);
         assertThat(bond.side()).isEqualTo(Side.BUY);
-        assertThat(bond.quantity()).isEqualByComparingTo("80.508475");
+        assertThat(bond.quantity()).isEqualByComparingTo("80.5085");
         assertThat(bond.amount()).isEqualByComparingTo("9500.00");
 
-        // Oro: objetivo 13.000 vs actual 21.500 -> vender 8.500 / 215 = 39,534884 uds
+        // Oro: objetivo 13.000 vs actual 21.500 -> vender 8.500 / 215 = 39,5349 uds
         RebalanceOrder gold = orderFor(plan, GOLD);
         assertThat(gold.side()).isEqualTo(Side.SELL);
-        assertThat(gold.quantity()).isEqualByComparingTo("39.534884");
+        assertThat(gold.quantity()).isEqualByComparingTo("39.5349");
         assertThat(gold.amount()).isEqualByComparingTo("8500.00");
 
         // No hay orden sobre el efectivo: es la partida de cierre.

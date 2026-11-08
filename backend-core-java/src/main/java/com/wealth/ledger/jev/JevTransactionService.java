@@ -13,8 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.format.DateTimeFormatter;
+import java.time.Instant;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +41,14 @@ public class JevTransactionService {
 
     /** Construye los asientos sin efectos secundarios. Referencia determinista: mismo plan -> mismos ids. */
     public JournalBatch buildJournal(RebalancePlan plan) {
-        String reference = "REB-" + plan.portfolioId() + "-" + REF_TIME.format(plan.asOf());
+        return buildJournal(plan, "REB-" + plan.portfolioId() + "-" + REF_TIME.format(plan.asOf()), plan.asOf());
+    }
+
+    /**
+     * Igual que {@link #buildJournal(RebalancePlan)} pero con referencia y fecha contable propias, para la ejecucion
+     * real de un plan (cada ejecucion necesita una referencia unica; la del plan depende solo de la fecha del snapshot).
+     */
+    public JournalBatch buildJournal(RebalancePlan plan, String reference, Instant bookedAt) {
         String cashAccount = "ASSETS:CASH:" + plan.baseCurrency();
 
         List<JournalEntry> entries = new ArrayList<>();
@@ -57,7 +65,7 @@ public class JevTransactionService {
 
             entries.add(new JournalEntry(
                     reference + "-" + String.format("%03d", seq++), reference,
-                    buy ? EntryType.BUY : EntryType.SELL, plan.asOf(), plan.baseCurrency(),
+                    buy ? EntryType.BUY : EntryType.SELL, bookedAt, plan.baseCurrency(),
                     buy ? List.of(custodyLine, cashLine) : List.of(cashLine, custodyLine)));
             netCash = buy ? netCash.subtract(order.amount()) : netCash.add(order.amount());
         }
@@ -72,7 +80,15 @@ public class JevTransactionService {
 
     /** Genera y registra el lote de asientos del plan. De momento NO persiste (ver TODO de la clase). */
     public JournalBatch record(RebalancePlan plan) {
-        JournalBatch batch = buildJournal(plan);
+        return record(buildJournal(plan));
+    }
+
+    /** Genera y registra el lote de una ejecucion con referencia y fecha propias. Tampoco persiste todavia. */
+    public JournalBatch record(RebalancePlan plan, String reference, Instant bookedAt) {
+        return record(buildJournal(plan, reference, bookedAt));
+    }
+
+    private JournalBatch record(JournalBatch batch) {
         // TODO(PostgreSQL): persistir 'batch' (append-only, idempotente por reference) cuando se active la BBDD.
         log.info("Journal batch {} built ({} entries, net cash movement {}); persistence pending PostgreSQL",
                 batch.reference(), batch.entries().size(), batch.netCashMovement());

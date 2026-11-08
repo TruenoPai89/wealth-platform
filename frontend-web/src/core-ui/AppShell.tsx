@@ -18,6 +18,7 @@
  */
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { SlotRegistryProvider } from "@/core-ui/SlotRegistry";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
@@ -29,6 +30,8 @@ interface NavItem {
   /** Módulo que activa este item. Para fases futuras. */
   modulePhase: 1 | 2 | 3 | 4;
   isActive?: boolean;
+  /** Ruta de Next.js. Los items sin href todavía no son navegables (se muestran como "Próx."). */
+  href?: string;
 }
 
 interface AppShellProps {
@@ -79,6 +82,17 @@ function IconPledge() {
   );
 }
 
+function IconTransfers() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 3l4 4-4 4" />
+      <path d="M3 7h18" />
+      <path d="M7 21l-4-4 4-4" />
+      <path d="M21 17H3" />
+    </svg>
+  );
+}
+
 function IconChevronLeft() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -100,9 +114,17 @@ function IconChevronRight() {
 const NAV_ITEMS: NavItem[] = [
   {
     id: "rebalancer",
-    label: "Balanceador",
+    label: "Mis Inversiones",
     icon: <IconBalancer />,
     modulePhase: 1,
+    href: "/",
+  },
+  {
+    id: "transfers",
+    label: "Transferencias",
+    icon: <IconTransfers />,
+    modulePhase: 1,
+    href: "/transferencias",
   },
   {
     id: "tax",
@@ -179,37 +201,55 @@ interface SidebarNavItemProps {
 }
 
 function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemProps) {
-  const isPhase1 = item.modulePhase === 1;
-  const isDisabled = !isPhase1; // Solo Fase 1 está disponible ahora
+  // Navegable = tiene ruta. Los módulos 2-4 siguen como "Próx." hasta que existan sus pantallas.
+  const isDisabled = !item.href;
+
+  const className = [
+    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+    "transition-colors duration-150",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
+    isActive
+      ? "bg-brand-600 text-white"
+      : isDisabled
+        ? "text-gray-600 cursor-not-allowed opacity-50"
+        : "text-gray-400 hover:text-white hover:bg-surface-overlay",
+  ].join(" ");
+
+  const content = (
+    <>
+      <span className="shrink-0">{item.icon}</span>
+      {!collapsed && (
+        <span className="truncate flex-1 text-left">{item.label}</span>
+      )}
+      {!collapsed && isDisabled && (
+        <span className="text-xs bg-surface-overlay text-gray-500 px-1.5 py-0.5 rounded shrink-0">
+          Próx.
+        </span>
+      )}
+    </>
+  );
 
   return (
     <li>
-      <button
-        onClick={() => !isDisabled && onClick(item.id)}
-        disabled={isDisabled}
-        className={[
-          "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
-          "transition-colors duration-150",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
-          isActive
-            ? "bg-brand-600 text-white"
-            : isDisabled
-              ? "text-gray-600 cursor-not-allowed opacity-50"
-              : "text-gray-400 hover:text-white hover:bg-surface-overlay",
-        ].join(" ")}
-        title={isDisabled ? `Módulo ${item.modulePhase} — Próximamente` : item.label}
-        aria-current={isActive ? "page" : undefined}
-      >
-        <span className="shrink-0">{item.icon}</span>
-        {!collapsed && (
-          <span className="truncate flex-1 text-left">{item.label}</span>
-        )}
-        {!collapsed && isDisabled && (
-          <span className="text-xs bg-surface-overlay text-gray-500 px-1.5 py-0.5 rounded shrink-0">
-            Próx.
-          </span>
-        )}
-      </button>
+      {item.href ? (
+        <Link
+          href={item.href}
+          onClick={() => onClick(item.id)}
+          className={className}
+          title={item.label}
+          aria-current={isActive ? "page" : undefined}
+        >
+          {content}
+        </Link>
+      ) : (
+        <button
+          disabled
+          className={className}
+          title={`Módulo ${item.modulePhase} — Próximamente`}
+        >
+          {content}
+        </button>
+      )}
     </li>
   );
 }

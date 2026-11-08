@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "source": "OPENJEV",
+  "asOf": "2026-11-08T09:00:00Z",
+  "ledgerRef": {
+    "lastEntryId": "JE-000482",
+    "entryCount": 482
+  },
+  "client": {
+    "clientId": "CLI-001",
+    "portfolioId": "PF-001",
+    "baseCurrency": "EUR"
+  },
+  "cash": [
+    { "currency": "EUR", "amount": 9500.00 }
+  ],
+  "positions": [
+    {
+      "instrumentId": "IE00B4L5Y983",
+      "isin": "IE00B4L5Y983",
+      "name": "iShares Core MSCI World",
+      "assetClass": "EQUITY",
+      "quantity": 400,
+      "currency": "EUR",
+      "bookCostTotal": 34000.00,
+      "acquisitionPrice": 85.00
+    },
+    {
+      "instrumentId": "IE00B3XXRP09",
+      "isin": "IE00B3XXRP09",
+      "name": "Vanguard S&P 500",
+      "assetClass": "EQUITY",
+      "quantity": 300,
+      "currency": "EUR",
+      "bookCostTotal": 27000.00,
+      "acquisitionPrice": 90.00
+    },
+    {
+      "instrumentId": "IE00B4WXJJ64",
+      "isin": "IE00B4WXJJ64",
+      "name": "iShares Core Euro Govt Bond",
+      "assetClass": "FIXED_INCOME",
+      "quantity": 250,
+      "currency": "EUR",
+      "bookCostTotal": 29000.00,
+      "acquisitionPrice": 116.00
+    },
+    {
+      "instrumentId": "IE00B579F325",
+      "isin": "IE00B579F325",
+      "name": "Invesco Physical Gold",
+      "assetClass": "COMMODITY",
+      "quantity": 100,
+      "currency": "EUR",
+      "bookCostTotal": 18000.00,
+      "acquisitionPrice": 180.00
+    }
+  ],
+  "prices": [
+    { "instrumentId": "IE00B4L5Y983", "price": 95.00,  "currency": "EUR", "priceDate": "2026-11-07" },
+    { "instrumentId": "IE00B3XXRP09", "price": 105.00, "currency": "EUR", "priceDate": "2026-11-07" },
+    { "instrumentId": "IE00B4WXJJ64", "price": 118.00, "currency": "EUR", "priceDate": "2026-11-07" },
+    { "instrumentId": "IE00B579F325", "price": 215.00, "currency": "EUR", "priceDate": "2026-11-07" }
+  ]
+}

@@ -73,3 +73,7 @@ postgres-data/
 *.log
 npm-debug.log*
 logs/
+
+# Artefactos locales de editor (extensiones de VS Code / Metals): no versionar
+.history/
+.metals/

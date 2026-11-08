@@ -21,6 +21,7 @@ import type {
   RebalancePlan,
   CashFlowSummary,
 } from "@/core-ui/types/portfolio";
+import { formatEur, formatUnits } from "@/core-ui/format";
 import { Slot } from "@/core-ui/SlotRegistry";
 import type { SlotRowProps, SlotHeaderProps } from "@/core-ui/SlotRegistry";
 
@@ -34,16 +35,13 @@ export interface PositionsTableProps {
 
 // ─── Helpers de formateo ──────────────────────────────────────────────────────
 
-const EUR_FMT = new Intl.NumberFormat("es-ES", {
-  style: "currency", currency: "EUR",
-  minimumFractionDigits: 2, maximumFractionDigits: 2,
-});
 const PCT_FMT = new Intl.NumberFormat("es-ES", {
   style: "percent",
   minimumFractionDigits: 2, maximumFractionDigits: 2,
 });
 
-function fmtEur(v: number) { return EUR_FMT.format(v); }
+// Importes con separador de miles también en 4 cifras (9.500,00 €): ver core-ui/format.ts
+function fmtEur(v: number) { return formatEur(v); }
 function fmtPct(v: number) { return PCT_FMT.format(v); }  // v es 0–1
 function fmtDelta(v: number) {
   const sign = v >= 0 ? "+" : "";
@@ -126,12 +124,28 @@ function OrderBadge({ position }: { position: AssetPosition }) {
         : "bg-semantic-loss/15 text-semantic-loss border border-semantic-loss/30",
     ].join(" ")}>
       {isBuy ? "▲" : "▼"} {isBuy ? "COMPRAR" : "VENDER"}{" "}
-      {position.order.quantity.toLocaleString("es-ES", { maximumFractionDigits: 2 })} uds.
+      {formatUnits(position.order.quantity)} uds.
     </span>
   );
 }
 
 function PnlCell({ position }: { position: AssetPosition }) {
+  // Schema 1.1: el backend calcula coste base y P&L por posición. El efectivo no tiene P&L (se pinta "—").
+  if (position.unrealizedPnLAmount !== undefined) {
+    const amount = position.unrealizedPnLAmount;
+    const pct = position.unrealizedPnLPercent ?? 0;
+    const color = amount >= 0 ? "text-semantic-gain" : "text-semantic-loss";
+    return (
+      <div className="flex flex-col items-end">
+        <span className={`text-sm font-medium ${color}`}>
+          {amount === 0 ? "—" : fmtEur(amount)}
+        </span>
+        {pct !== 0 && (
+          <span className={`text-xs ${color} opacity-80`}>{fmtPnlPct(pct)}</span>
+        )}
+      </div>
+    );
+  }
   if (!position.pnl) {
     // Sin datos de P&L del backend base — mostrar valor deltaValue como referencia
     const delta = position.deltaValue;
@@ -206,7 +220,7 @@ function PositionRow({ position, isEven }: { position: AssetPosition; isEven: bo
               {fmtEur(position.marketValue)}
             </span>
             <span className="text-xs text-gray-500">
-              {position.quantity.toLocaleString("es-ES", { maximumFractionDigits: 2 })} uds.
+              {formatUnits(position.quantity)} uds.
             </span>
             <OrderBadge position={position} />
           </div>
@@ -276,8 +290,20 @@ function TableHeader({ plan }: { plan: RebalancePlan }) {
       </div>
 
       {/* KPIs principales */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <KpiCard label="Valor Total" value={fmtEur(plan.totalValue)} accent="neutral" />
+        {/* Schema 1.1: coste total y P&L no realizado calculados por el backend */}
+        {plan.performance && (
+          <>
+            <KpiCard label="Coste Total" value={fmtEur(plan.performance.totalCost)} accent="neutral" />
+            <KpiCard
+              label="P&L No Realizado"
+              value={fmtEur(plan.performance.unrealizedPnLAmount)}
+              sub={fmtPnlPct(plan.performance.unrealizedPnLPercent)}
+              accent={plan.performance.unrealizedPnLAmount >= 0 ? "gain" : "loss"}
+            />
+          </>
+        )}
         <KpiCard label="Efectivo Actual" value={fmtEur(plan.cashFlow.cashBefore)} accent="neutral" />
         <KpiCard
           label="Efectivo Tras Rebalanceo"

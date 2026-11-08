@@ -46,7 +46,7 @@ class JevTransactionServiceTest {
                 .findFirst().orElseThrow();
         assertThat(buy.lines().get(0).side()).isEqualTo(LineSide.DEBIT);
         assertThat(buy.lines().get(0).amount()).isEqualByComparingTo("7500.00");
-        assertThat(buy.lines().get(0).quantity()).isEqualByComparingTo("78.947368");
+        assertThat(buy.lines().get(0).quantity()).isEqualByComparingTo("78.9474");
         assertThat(buy.lines().get(1).account()).isEqualTo("ASSETS:CASH:EUR");
         assertThat(buy.lines().get(1).side()).isEqualTo(LineSide.CREDIT);
         assertThat(buy.lines().get(1).quantity()).isNull();

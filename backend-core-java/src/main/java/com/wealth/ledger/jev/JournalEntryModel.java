@@ -47,7 +47,8 @@ public final class JournalEntryModel {
             String assetClass,
             BigDecimal quantity,
             String currency,
-            BigDecimal bookCostTotal) {
+            BigDecimal bookCostTotal,
+            BigDecimal acquisitionPrice) {
     }
 
     public record PriceQuote(String instrumentId, BigDecimal price, String currency, LocalDate priceDate) {

@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Lee el estado actual de la cartera desde OpenJEV (solo lectura; el ledger es inmutable).
@@ -32,6 +33,12 @@ public class JevLedgerAdapter {
 
     private final ObjectMapper objectMapper;
     private final Path snapshotFile;
+    /**
+     * Estado de cartera tras ejecutar rebalanceos (portfolioId -> cartera). Mientras el ledger se lee de un JSON
+     * estatico, esto emula lo que haria el ledger real: deducir el estado sumando los asientos ya registrados.
+     * TODO(PostgreSQL): desaparece al leer el estado de los asientos persistidos.
+     */
+    private final Map<String, Portfolio> postedState = new ConcurrentHashMap<>();
 
     public JevLedgerAdapter(ObjectMapper objectMapper, @Value("${wealth.ledger.mock-file}") String snapshotFile) {
         this.objectMapper = objectMapper;
@@ -42,6 +49,10 @@ public class JevLedgerAdapter {
         Snapshot snapshot = readSnapshot();
         if (!snapshot.client().portfolioId().equals(portfolioId)) {
             throw new NoSuchElementException("Portfolio not found in ledger snapshot: " + portfolioId);
+        }
+        Portfolio posted = postedState.get(portfolioId);
+        if (posted != null) {
+            return posted;
         }
         String base = snapshot.client().baseCurrency();
 
@@ -59,7 +70,8 @@ public class JevLedgerAdapter {
             }
             requireBaseCurrency(quote.currency(), base, balance.instrumentId());
             positions.add(new AssetPosition(balance.instrumentId(), balance.isin(), balance.name(),
-                    AssetClass.valueOf(balance.assetClass()), balance.quantity(), quote.price(), balance.currency()));
+                    AssetClass.valueOf(balance.assetClass()), balance.quantity(), quote.price(), balance.currency(),
+                    costBasisOf(balance)));
         }
 
         // El efectivo es una posicion mas; siempre existe la linea en moneda base (aunque sea 0).
@@ -74,12 +86,47 @@ public class JevLedgerAdapter {
                 snapshot.asOf(), positions);
     }
 
+    /** Publica el estado de la cartera tras ejecutar un rebalanceo: las siguientes lecturas ya lo reflejan. */
+    public void applyPostedState(Portfolio portfolio) {
+        postedState.put(portfolio.portfolioId(), portfolio);
+    }
+
+    /** Vuelve al estado del snapshot (para demos y tests). */
+    public void resetPostedState(String portfolioId) {
+        postedState.remove(portfolioId);
+    }
+
     private Snapshot readSnapshot() {
         try {
             return objectMapper.readValue(Files.readString(snapshotFile), Snapshot.class);
         } catch (IOException e) {
             throw new UncheckedIOException("Cannot read ledger snapshot " + snapshotFile.toAbsolutePath(), e);
         }
+    }
+
+    /**
+     * Coste base TOTAL en moneda base: bookCostTotal (dato nativo del ledger) o acquisitionPrice * cantidad.
+     * Si vienen ambos tienen que cuadrar; el precio unitario va redondeado a centimos, de ahi la tolerancia.
+     */
+    private static BigDecimal costBasisOf(PositionBalance balance) {
+        BigDecimal fromUnitPrice = balance.acquisitionPrice() == null
+                ? null : balance.acquisitionPrice().multiply(balance.quantity());
+        BigDecimal total = balance.bookCostTotal();
+        if (total == null && fromUnitPrice == null) {
+            throw new IllegalStateException(
+                    "No cost basis (bookCostTotal / acquisitionPrice) for instrument " + balance.instrumentId());
+        }
+        if (total == null) {
+            return fromUnitPrice;
+        }
+        if (fromUnitPrice != null) {
+            BigDecimal tolerance = balance.quantity().multiply(new BigDecimal("0.005")).add(new BigDecimal("0.01"));
+            if (fromUnitPrice.subtract(total).abs().compareTo(tolerance) > 0) {
+                throw new IllegalStateException("Inconsistent cost basis for " + balance.instrumentId()
+                        + ": acquisitionPrice * quantity = " + fromUnitPrice + " but bookCostTotal = " + total);
+            }
+        }
+        return total;
     }
 
     private static void requireBaseCurrency(String currency, String base, String what) {

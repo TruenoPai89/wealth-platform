@@ -60,7 +60,7 @@ class RebalanceOrchestratorTest {
 
         String generated = Files.readString(GENERATED);
         JsonNode json = objectMapper.readTree(generated);
-        assertThat(json.get("schemaVersion").asText()).isEqualTo("1.0");
+        assertThat(json.get("schemaVersion").asText()).isEqualTo("1.1");
         assertThat(json.get("module").asText()).isEqualTo("MOD1_REBALANCER");
         assertThat(json.get("asOf").asText()).isEqualTo("2026-11-08T09:00:00Z");
         assertThat(json.get("positions")).hasSize(5);
@@ -73,6 +73,18 @@ class RebalanceOrchestratorTest {
         // El contrato de /contracts se lee, nunca se escribe: la salida generada debe coincidir con el.
         JsonNode reference = objectMapper.readTree(Files.readString(CONTRACT));
         assertThat(json).isEqualTo(reference);
+    }
+
+    @Test
+    void planCarriesPerformanceAndProjectionReadFromTheJevMock() {
+        RebalancePlan plan = orchestrator.rebalance("PF-001");
+
+        // client_portfolio_jev.json: coste 108.000 de posiciones + 9.500 de caja
+        assertThat(plan.performance().totalCost()).isEqualByComparingTo("117500.00");
+        assertThat(plan.performance().unrealizedPnLAmount()).isEqualByComparingTo("12500.00");
+        assertThat(plan.performance().unrealizedPnLPercent()).isEqualByComparingTo("10.64");
+        assertThat(plan.projectedPositions()).hasSize(5);
+        assertThat(plan.projectedPerformance().totalValue()).isEqualByComparingTo("130000.00");
     }
 
     @Test

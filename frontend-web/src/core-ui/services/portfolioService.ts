@@ -1,0 +1,69 @@
+/**
+ * portfolioService.ts
+ *
+ * Punto único de datos del Módulo 1 para la UI:
+ *   - REAL (por defecto): GET {API_BASE}/portfolios/{id}/rebalance → backend Java (RebalancePlan v1.1).
+ *   - MOCK (opt-in): NEXT_PUBLIC_USE_MOCK=true usa mockPortfolioService (custody_positions.json, schema 1.0),
+ *     útil para trabajar en la UI sin backend. El mock no trae coste/P&L ni proyección, y las acciones que
+ *     escriben (ejecutar, editar meta) se desactivan en ese modo.
+ *
+ * @module core-ui/services/portfolioService
+ */
+
+import { apiClient } from "@/core-ui/api/apiClient";
+import { fetchRebalancePlan as fetchMockPlan } from "@/core-ui/services/mockPortfolioService";
+import type { RebalancePlan } from "@/core-ui/types/rebalancePlan";
+import type { RebalanceExecution, Transfer } from "@/core-ui/types/transfers";
+
+export const USE_MOCK = process.env["NEXT_PUBLIC_USE_MOCK"] === "true";
+
+/** Llama al endpoint real y devuelve el plan tal cual. */
+export function fetchRebalancePlan(portfolioId: string): Promise<RebalancePlan> {
+  return apiClient.get<RebalancePlan>(
+    `/portfolios/${encodeURIComponent(portfolioId)}/rebalance`,
+  );
+}
+
+/**
+ * Guarda la meta de balanceo del cliente (instrumentId → peso 0..1, suma 1).
+ * El backend valida y responde 400 con { error } si no es válida. La nueva meta se usa en el siguiente rebalanceo.
+ */
+export function updateTargets(
+  portfolioId: string,
+  weights: Record<string, number>,
+): Promise<Record<string, number>> {
+  return apiClient.put<Record<string, number>>(
+    `/portfolios/${encodeURIComponent(portfolioId)}/targets`,
+    weights,
+  );
+}
+
+/**
+ * Acepta el plan vigente: el backend recalcula el plan, genera los asientos y registra las transferencias
+ * (compras, ventas y ajuste neto de efectivo). Responde 409 si no hay nada que ejecutar.
+ */
+export function executeRebalance(portfolioId: string): Promise<RebalanceExecution> {
+  return apiClient.post<RebalanceExecution>(
+    `/portfolios/${encodeURIComponent(portfolioId)}/rebalance/execute`,
+    {},
+  );
+}
+
+/** Historial de movimientos de la cartera, el más reciente primero. */
+export function fetchTransfers(portfolioId: string): Promise<Transfer[]> {
+  return apiClient.get<Transfer[]>(
+    `/portfolios/${encodeURIComponent(portfolioId)}/transfers`,
+  );
+}
+
+/**
+ * Carga el plan de la cartera: backend real salvo que se active el modo mock.
+ * El mock es schema 1.0 (sin performance/projectedPositions): se tipa como v1.1 y el resto del código
+ * trata esos campos como ausentes (ver rebalancePlanAdapter.toDisplayPlan).
+ */
+export async function loadPortfolio(portfolioId: string): Promise<RebalancePlan> {
+  if (USE_MOCK) {
+    return (await fetchMockPlan(portfolioId)) as unknown as RebalancePlan;
+  }
+  return fetchRebalancePlan(portfolioId);
+}

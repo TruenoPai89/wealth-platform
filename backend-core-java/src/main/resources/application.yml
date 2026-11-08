@@ -18,10 +18,18 @@ spring:
     enabled: false
 
 server:
-  # 8080 lo ocupa OpenJEV System One (localhost:8080); el backend core escucha en 8081.
-  port: 8081
+  # El backend core escucha en 8080 (el frontend apunta a http://localhost:8080/api/v1).
+  # OJO: wealth.openjev.base-url tambien apunta a localhost:8080. Si levantas OpenJEV System One en esta misma
+  # maquina, mueve uno de los dos (SERVER_PORT=... o WEALTH_OPENJEV_BASE_URL=...) para que no choquen.
+  port: 8080
 
 wealth:
+  transfers:
+    # Retardo de liquidacion simulado: pasado este tiempo, los movimientos pasan de "En proceso" a "Completado".
+    settlement-delay-seconds: 20
+  cors:
+    # Origenes permitidos para /api/** (frontend Next.js en desarrollo). Lista separada por comas.
+    allowed-origins: http://localhost:3000
   openjev:
     base-url: http://localhost:8080/v1/systemone
     timeout-ms: 5000

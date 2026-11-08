@@ -2,7 +2,9 @@ package com.wealth.mod1_rebalancer;
 
 import com.wealth.mod1_rebalancer.RebalancePlan.CashFlowSummary;
 import com.wealth.mod1_rebalancer.RebalancePlan.Constraints;
+import com.wealth.mod1_rebalancer.RebalancePlan.Performance;
 import com.wealth.mod1_rebalancer.RebalancePlan.PositionRow;
+import com.wealth.mod1_rebalancer.RebalancePlan.ProjectedPosition;
 import com.wealth.shared.domain.AssetPosition;
 import com.wealth.shared.domain.Portfolio;
 import com.wealth.shared.domain.RebalanceOrder;
@@ -23,13 +25,19 @@ import java.util.TreeMap;
  * Matematica estricta del rebalanceo (sin IA, sin solver). BigDecimal en todo, cantidades fraccionarias.
  * <p>
  * Para cada instrumento: valorObjetivo = pesoObjetivo * valorTotal; delta = objetivo - actual;
- * cantidad = delta / precio (6 decimales). El efectivo es un peso objetivo mas y actua como partida
- * de cierre: su saldo final es el saldo inicial - compras + ventas, de modo que el valor total se conserva exactamente.
+ * cantidad = delta / precio, redondeada a 4 decimales HALF_UP. El importe de cada orden sale de esa cantidad ya
+ * redondeada (lo que realmente se opera). El efectivo es un peso objetivo mas y actua como partida de cierre:
+ * su saldo final es el saldo inicial - compras + ventas, a 2 decimales HALF_UP, de modo que el valor total se
+ * conserva y los asientos contables de cada orden cuadran con la caja.
+ * <p>
+ * Ademas calcula el P&amp;L no realizado (valor - coste base) de la cartera actual y de la proyectada tras las ordenes.
  */
 @Component
 public class CashFlowRebalancer {
 
-    static final int QTY_SCALE = 6;
+    /** Participaciones: maximo 4 decimales, HALF_UP. */
+    static final int QTY_SCALE = 4;
+    private static final RoundingMode QTY_RM = RoundingMode.HALF_UP;
     static final int WEIGHT_SCALE = 6;
     static final int MONEY_SCALE = 2;
     /** El efectivo se cierra siempre a 2 decimales con HALF_UP (precision contable de caja). */
@@ -37,6 +45,7 @@ public class CashFlowRebalancer {
     private static final RoundingMode CASH_RM = RoundingMode.HALF_UP;
     private static final RoundingMode RM = RoundingMode.HALF_EVEN;
     private static final BigDecimal WEIGHT_TOLERANCE = new BigDecimal("0.000001");
+    private static final BigDecimal HUNDRED = new BigDecimal("100");
 
     public RebalancePlan rebalance(Portfolio portfolio, Map<String, BigDecimal> targetWeights,
                                    Map<String, BigDecimal> lockedQuantities) {
@@ -60,18 +69,20 @@ public class CashFlowRebalancer {
             if (p.isCash()) {
                 cashPosition = p;
             } else {
-                BigDecimal deltaQty = deltaValue.divide(p.price(), QTY_SCALE, RM);
+                BigDecimal deltaQty = deltaValue.divide(p.price(), QTY_SCALE, QTY_RM);
                 if (deltaQty.signum() < 0) {
                     BigDecimal locked = lockedQuantities.getOrDefault(p.instrumentId(), BigDecimal.ZERO);
-                    BigDecimal sellable = p.quantity().subtract(locked).max(BigDecimal.ZERO);
+                    // El tope vendible se trunca (DOWN): nunca se ordena vender mas de lo disponible por redondeo.
+                    BigDecimal sellable = p.quantity().subtract(locked).max(BigDecimal.ZERO)
+                            .setScale(QTY_SCALE, RoundingMode.DOWN);
                     BigDecimal sellQty = deltaQty.negate().min(sellable);
                     if (sellQty.signum() > 0) {
                         order = order(p, Side.SELL, sellQty);
-                        sellTotal = sellTotal.add(sellQty.multiply(p.price()));
+                        sellTotal = sellTotal.add(order.amount());
                     }
                 } else if (deltaQty.signum() > 0) {
                     order = order(p, Side.BUY, deltaQty);
-                    buyTotal = buyTotal.add(deltaQty.multiply(p.price()));
+                    buyTotal = buyTotal.add(order.amount());
                 }
             }
             calcs.add(new Calc(p, weight, targetValue, deltaValue, order));
@@ -87,32 +98,59 @@ public class CashFlowRebalancer {
         BigDecimal cashAfterRounded = cashAfter.setScale(CASH_SCALE, CASH_RM);
 
         List<PositionRow> rows = new ArrayList<>();
+        List<ProjectedPosition> projected = new ArrayList<>();
         List<RebalanceOrder> orders = new ArrayList<>();
+        BigDecimal currentCostTotal = BigDecimal.ZERO;
+        BigDecimal projectedValueTotal = BigDecimal.ZERO;
+        BigDecimal projectedCostTotal = BigDecimal.ZERO;
+
         for (Calc c : calcs) {
             AssetPosition p = c.position();
+            RebalanceOrder order = c.order();
+
             BigDecimal postQty;
             if (p.isCash()) {
                 postQty = cashAfterRounded;
-            } else if (c.order() == null) {
-                postQty = p.quantity();
-            } else if (c.order().side() == Side.BUY) {
-                postQty = p.quantity().add(c.order().quantity());
+            } else if (order == null) {
+                postQty = qty(p.quantity());
+            } else if (order.side() == Side.BUY) {
+                postQty = qty(p.quantity().add(order.quantity()));
             } else {
-                postQty = p.quantity().subtract(c.order().quantity());
+                postQty = qty(p.quantity().subtract(order.quantity()));
             }
             BigDecimal postValue = postQty.multiply(p.price());
+            BigDecimal postWeight = postValue.divide(total, WEIGHT_SCALE, RM);
             BigDecimal currentWeight = p.marketValue().divide(total, WEIGHT_SCALE, RM);
+            BigDecimal targetWeight = weight(c.targetWeight());
+
+            BigDecimal marketValue = money(p.marketValue());
+            BigDecimal costBasis = money(p.costBasis());
+            BigDecimal pnl = marketValue.subtract(costBasis);
+            currentCostTotal = currentCostTotal.add(costBasis);
 
             rows.add(new PositionRow(
                     p.instrumentId(), p.isin(), p.name(), p.assetClass(),
-                    qty(p.quantity()), p.price().setScale(MONEY_SCALE, RM), money(p.marketValue()),
-                    currentWeight, weight(c.targetWeight()), weight(c.targetWeight()).subtract(currentWeight),
+                    qty(p.quantity()), p.price().setScale(MONEY_SCALE, RM), marketValue,
+                    costBasis, pnl, pct(pnl, costBasis),
+                    currentWeight, targetWeight, targetWeight.subtract(currentWeight),
                     money(c.targetValue()), money(c.deltaValue()),
-                    c.order() == null ? null : roundOrder(c.order()),
-                    p.isCash() ? cashAfterRounded : qty(postQty),
-                    money(postValue), postValue.divide(total, WEIGHT_SCALE, RM)));
-            if (c.order() != null) {
-                orders.add(roundOrder(c.order()));
+                    order,
+                    p.isCash() ? cashAfterRounded : postQty,
+                    money(postValue), postWeight));
+
+            BigDecimal projectedCost = projectedCostBasis(p, order, cashAfterRounded);
+            BigDecimal projectedValue = money(postValue);
+            BigDecimal projectedPnl = projectedValue.subtract(projectedCost);
+            projectedValueTotal = projectedValueTotal.add(projectedValue);
+            projectedCostTotal = projectedCostTotal.add(projectedCost);
+            projected.add(new ProjectedPosition(
+                    p.instrumentId(), p.isin(), p.name(), p.assetClass(),
+                    p.isCash() ? cashAfterRounded : postQty, p.price().setScale(MONEY_SCALE, RM), projectedValue,
+                    postWeight, targetWeight, targetWeight.subtract(postWeight),
+                    projectedCost, projectedPnl, pct(projectedPnl, projectedCost)));
+
+            if (order != null) {
+                orders.add(order);
             }
         }
         // Ventas primero (generan la caja que financia las compras), luego compras; estable por instrumento.
@@ -126,7 +164,41 @@ public class CashFlowRebalancer {
 
         return new RebalancePlan(RebalancePlan.SCHEMA_VERSION, RebalancePlan.MODULE, portfolio.portfolioId(),
                 portfolio.clientId(), portfolio.baseCurrency(), portfolio.asOf(), money(total),
-                new Constraints(false, new TreeMap<>(lockedQuantities)), rows, orders, summary);
+                new Constraints(false, new TreeMap<>(lockedQuantities)), rows, orders, summary,
+                performance(money(total), currentCostTotal),
+                projected, performance(projectedValueTotal, projectedCostTotal));
+    }
+
+    /**
+     * Coste base tras operar, por COSTE MEDIO: compra suma su importe; venta retira la parte proporcional.
+     * El efectivo va a valor nominal.
+     */
+    private static BigDecimal projectedCostBasis(AssetPosition p, RebalanceOrder order, BigDecimal cashAfter) {
+        if (p.isCash()) {
+            return cashAfter;
+        }
+        BigDecimal cost = money(p.costBasis());
+        if (order == null) {
+            return cost;
+        }
+        if (order.side() == Side.BUY) {
+            return cost.add(order.amount());
+        }
+        BigDecimal removed = cost.multiply(order.quantity()).divide(p.quantity(), MONEY_SCALE, RM);
+        return cost.subtract(removed).max(BigDecimal.ZERO);
+    }
+
+    private static Performance performance(BigDecimal totalValue, BigDecimal totalCost) {
+        BigDecimal pnl = totalValue.subtract(totalCost);
+        return new Performance(totalValue, totalCost, pnl, pct(pnl, totalCost));
+    }
+
+    /** pnl / coste * 100 con 2 decimales; 0,00 si no hay coste (evita division por cero). */
+    private static BigDecimal pct(BigDecimal pnl, BigDecimal cost) {
+        if (cost.signum() == 0) {
+            return BigDecimal.ZERO.setScale(2);
+        }
+        return pnl.multiply(HUNDRED).divide(cost, 2, RM);
     }
 
     private static void validateTargets(Portfolio portfolio, Map<String, BigDecimal> targets) {
@@ -147,14 +219,10 @@ public class CashFlowRebalancer {
         }
     }
 
+    /** Orden ya redondeada: cantidad a 4 decimales e importe = cantidad redondeada * precio, a 2 decimales. */
     private static RebalanceOrder order(AssetPosition p, Side side, BigDecimal quantity) {
-        return new RebalanceOrder(p.instrumentId(), p.name(), side, quantity, p.price(),
-                quantity.multiply(p.price()), p.currency());
-    }
-
-    private static RebalanceOrder roundOrder(RebalanceOrder o) {
-        return new RebalanceOrder(o.instrumentId(), o.name(), o.side(), qty(o.quantity()),
-                o.price().setScale(MONEY_SCALE, RM), money(o.amount()), o.currency());
+        return new RebalanceOrder(p.instrumentId(), p.name(), side, quantity,
+                p.price().setScale(MONEY_SCALE, RM), money(quantity.multiply(p.price())), p.currency());
     }
 
     private static BigDecimal money(BigDecimal v) {
@@ -162,7 +230,7 @@ public class CashFlowRebalancer {
     }
 
     private static BigDecimal qty(BigDecimal v) {
-        return v.setScale(QTY_SCALE, RM);
+        return v.setScale(QTY_SCALE, QTY_RM);
     }
 
     private static BigDecimal weight(BigDecimal v) {
