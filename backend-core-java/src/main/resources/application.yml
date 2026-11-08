@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: wealth-backend-core
+  jackson:
+    deserialization:
+      # Los decimales del JSON se leen como BigDecimal (nunca double) -> sin perdida de precision
+      use-big-decimal-for-floats: true
+    generator:
+      # BigDecimal se escribe en notacion plana (0.000001 en lugar de 1E-6)
+      write-bigdecimal-as-plain: true
+    serialization:
+      write-dates-as-timestamps: false
+  # TODO(PostgreSQL): mientras JEV se lee del mock JSON no hay base de datos.
+  # Para conectar PostgreSQL: quitar este exclude, definir spring.datasource.* y poner spring.flyway.enabled=true.
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  flyway:
+    enabled: false
+
+server:
+  # 8080 lo ocupa OpenJEV System One (localhost:8080); el backend core escucha en 8081.
+  port: 8081
+
+wealth:
+  openjev:
+    base-url: http://localhost:8080/v1/systemone
+    timeout-ms: 5000
+  ledger:
+    # Foto exportada por OpenJEV (temporal). Ruta relativa al directorio de trabajo (backend-core-java/).
+    mock-file: ../bank-simulator-mocks/api-json-responses/client_portfolio_jev.json
+  rebalancer:
+    # Pesos objetivo por portfolioId. Suma 1.0; el efectivo es un peso mas (CASH:<moneda>).
+    # Las claves con ':' necesitan notacion de corchetes para el binder de Spring.
+    targets:
+      PF-001:
+        "[IE00B4L5Y983]": 0.35   # iShares Core MSCI World
+        "[IE00B3XXRP09]": 0.20   # Vanguard S&P 500
+        "[IE00B4WXJJ64]": 0.30   # iShares Core Euro Govt Bond
+        "[IE00B579F325]": 0.10   # Invesco Physical Gold
+        "[CASH:EUR]": 0.05

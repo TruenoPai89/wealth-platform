@@ -1,0 +1,172 @@
+{
+  "schemaVersion" : "1.0",
+  "module" : "MOD1_REBALANCER",
+  "portfolioId" : "PF-001",
+  "clientId" : "CLI-001",
+  "baseCurrency" : "EUR",
+  "asOf" : "2026-11-08T09:00:00Z",
+  "totalValue" : 130000.00,
+  "constraints" : {
+    "taxFrictionApplied" : false,
+    "lockedQuantities" : { }
+  },
+  "positions" : [ {
+    "instrumentId" : "IE00B4L5Y983",
+    "isin" : "IE00B4L5Y983",
+    "name" : "iShares Core MSCI World",
+    "assetClass" : "EQUITY",
+    "quantity" : 400.000000,
+    "price" : 95.00,
+    "marketValue" : 38000.00,
+    "currentWeight" : 0.292308,
+    "targetWeight" : 0.350000,
+    "deltaWeight" : 0.057692,
+    "targetValue" : 45500.00,
+    "deltaValue" : 7500.00,
+    "order" : {
+      "instrumentId" : "IE00B4L5Y983",
+      "name" : "iShares Core MSCI World",
+      "side" : "BUY",
+      "quantity" : 78.947368,
+      "price" : 95.00,
+      "amount" : 7500.00,
+      "currency" : "EUR"
+    },
+    "postTradeQuantity" : 478.947368,
+    "postTradeValue" : 45500.00,
+    "postTradeWeight" : 0.350000
+  }, {
+    "instrumentId" : "IE00B3XXRP09",
+    "isin" : "IE00B3XXRP09",
+    "name" : "Vanguard S&P 500",
+    "assetClass" : "EQUITY",
+    "quantity" : 300.000000,
+    "price" : 105.00,
+    "marketValue" : 31500.00,
+    "currentWeight" : 0.242308,
+    "targetWeight" : 0.200000,
+    "deltaWeight" : -0.042308,
+    "targetValue" : 26000.00,
+    "deltaValue" : -5500.00,
+    "order" : {
+      "instrumentId" : "IE00B3XXRP09",
+      "name" : "Vanguard S&P 500",
+      "side" : "SELL",
+      "quantity" : 52.380952,
+      "price" : 105.00,
+      "amount" : 5500.00,
+      "currency" : "EUR"
+    },
+    "postTradeQuantity" : 247.619048,
+    "postTradeValue" : 26000.00,
+    "postTradeWeight" : 0.200000
+  }, {
+    "instrumentId" : "IE00B4WXJJ64",
+    "isin" : "IE00B4WXJJ64",
+    "name" : "iShares Core Euro Govt Bond",
+    "assetClass" : "FIXED_INCOME",
+    "quantity" : 250.000000,
+    "price" : 118.00,
+    "marketValue" : 29500.00,
+    "currentWeight" : 0.226923,
+    "targetWeight" : 0.300000,
+    "deltaWeight" : 0.073077,
+    "targetValue" : 39000.00,
+    "deltaValue" : 9500.00,
+    "order" : {
+      "instrumentId" : "IE00B4WXJJ64",
+      "name" : "iShares Core Euro Govt Bond",
+      "side" : "BUY",
+      "quantity" : 80.508475,
+      "price" : 118.00,
+      "amount" : 9500.00,
+      "currency" : "EUR"
+    },
+    "postTradeQuantity" : 330.508475,
+    "postTradeValue" : 39000.00,
+    "postTradeWeight" : 0.300000
+  }, {
+    "instrumentId" : "IE00B579F325",
+    "isin" : "IE00B579F325",
+    "name" : "Invesco Physical Gold",
+    "assetClass" : "COMMODITY",
+    "quantity" : 100.000000,
+    "price" : 215.00,
+    "marketValue" : 21500.00,
+    "currentWeight" : 0.165385,
+    "targetWeight" : 0.100000,
+    "deltaWeight" : -0.065385,
+    "targetValue" : 13000.00,
+    "deltaValue" : -8500.00,
+    "order" : {
+      "instrumentId" : "IE00B579F325",
+      "name" : "Invesco Physical Gold",
+      "side" : "SELL",
+      "quantity" : 39.534884,
+      "price" : 215.00,
+      "amount" : 8500.00,
+      "currency" : "EUR"
+    },
+    "postTradeQuantity" : 60.465116,
+    "postTradeValue" : 13000.00,
+    "postTradeWeight" : 0.100000
+  }, {
+    "instrumentId" : "CASH:EUR",
+    "isin" : null,
+    "name" : "Cash EUR",
+    "assetClass" : "CASH",
+    "quantity" : 9500.000000,
+    "price" : 1.00,
+    "marketValue" : 9500.00,
+    "currentWeight" : 0.073077,
+    "targetWeight" : 0.050000,
+    "deltaWeight" : -0.023077,
+    "targetValue" : 6500.00,
+    "deltaValue" : -3000.00,
+    "order" : null,
+    "postTradeQuantity" : 6500.00,
+    "postTradeValue" : 6500.00,
+    "postTradeWeight" : 0.050000
+  } ],
+  "orders" : [ {
+    "instrumentId" : "IE00B3XXRP09",
+    "name" : "Vanguard S&P 500",
+    "side" : "SELL",
+    "quantity" : 52.380952,
+    "price" : 105.00,
+    "amount" : 5500.00,
+    "currency" : "EUR"
+  }, {
+    "instrumentId" : "IE00B579F325",
+    "name" : "Invesco Physical Gold",
+    "side" : "SELL",
+    "quantity" : 39.534884,
+    "price" : 215.00,
+    "amount" : 8500.00,
+    "currency" : "EUR"
+  }, {
+    "instrumentId" : "IE00B4L5Y983",
+    "name" : "iShares Core MSCI World",
+    "side" : "BUY",
+    "quantity" : 78.947368,
+    "price" : 95.00,
+    "amount" : 7500.00,
+    "currency" : "EUR"
+  }, {
+    "instrumentId" : "IE00B4WXJJ64",
+    "name" : "iShares Core Euro Govt Bond",
+    "side" : "BUY",
+    "quantity" : 80.508475,
+    "price" : 118.00,
+    "amount" : 9500.00,
+    "currency" : "EUR"
+  } ],
+  "cashFlow" : {
+    "cashBefore" : 9500.00,
+    "buyTotal" : 17000.00,
+    "sellTotal" : 14000.00,
+    "netCashFlow" : -3000.00,
+    "cashAfter" : 6500.00,
+    "targetCash" : 6500.00
+  }
+}
