@@ -19,9 +19,10 @@ import React from "react";
 import type { SlotRowProps } from "@/core-ui/SlotRegistry";
 
 export function PledgedLockIcon({ position }: SlotRowProps) {
-  if (!position.flags?.isPledged || !position.pledgeInfo) return null;
+  const { flags, pledgeInfo } = position;
+  if (!flags?.isPledged || !pledgeInfo) return null;
 
-  const { ltvRatio, ltvThresholdWarning, ltvThresholdLiquidation } = position.pledgeInfo;
+  const { ltvRatio, ltvThresholdWarning, ltvThresholdLiquidation, loanId } = pledgeInfo;
 
   const isLiquidationRisk = ltvRatio >= ltvThresholdLiquidation;
   const isWarning = ltvRatio >= ltvThresholdWarning;
@@ -36,7 +37,7 @@ export function PledgedLockIcon({ position }: SlotRowProps) {
     ? `¡RIESGO DE LIQUIDACIÓN! LTV: ${(ltvRatio * 100).toFixed(1)}% (umbral: ${(ltvThresholdLiquidation * 100).toFixed(0)}%)`
     : isWarning
       ? `Atención: LTV en zona de warning: ${(ltvRatio * 100).toFixed(1)}% (umbral: ${(ltvThresholdWarning * 100).toFixed(0)}%)`
-      : `Pignorado como garantía · LTV: ${(ltvRatio * 100).toFixed(1)}% · Préstamo ${position.pledgeInfo.loanId}`;
+      : `Pignorado como garantía · LTV: ${(ltvRatio * 100).toFixed(1)}% · Préstamo ${loanId}`;
 
   return (
     <span
