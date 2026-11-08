@@ -1,0 +1,21 @@
+# ─── Next.js ─────────────────────────────────────────────────────────────────
+.next/
+out/
+
+# ─── Dependencias ────────────────────────────────────────────────────────────
+node_modules/
+
+# ─── TypeScript build cache ───────────────────────────────────────────────────
+tsconfig.tsbuildinfo
+
+# ─── Variables de entorno locales ────────────────────────────────────────────
+# .env.local contiene claves de API y la URL del backend — nunca al repo
+.env.local
+.env.*.local
+
+# ─── Vercel (si se despliega ahí en el futuro) ────────────────────────────────
+.vercel/
+
+# ─── Misc ────────────────────────────────────────────────────────────────────
+*.log
+.DS_Store

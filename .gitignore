@@ -1,0 +1,75 @@
+# ============================================================
+# .gitignore RAÍZ del monorepo — wealth-platform
+# Cubre los 4 stacks: Java (Raúl), C++ (Comp.3), Python (Comp.4), Next.js (Carlos)
+# ============================================================
+
+# ─── Documentos internos sensibles (ya estaba) ───────────────────────────────
+plan_de_desarrollo_y_asignaci_n_de_equipo.md
+
+# ─── Secretos y variables de entorno (NUNCA al repo) ────────────────────────
+.env
+.env.local
+.env.*.local
+.env.production
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# ─── IDEs y editores ─────────────────────────────────────────────────────────
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Java / Spring Boot (Raúl) ───────────────────────────────────────────────
+backend-core-java/target/
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+
+# ─── C++ / CMake (Compañero 3) ───────────────────────────────────────────────
+quant-engine-cpp/build/
+quant-engine-cpp/cmake-build-*/
+*.o
+*.so
+*.a
+*.dylib
+CMakeCache.txt
+CMakeFiles/
+
+# ─── Python / FastAPI (Compañero 4) ──────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Next.js / Node.js (Carlos) ──────────────────────────────────────────────
+frontend-web/node_modules/
+frontend-web/.next/
+frontend-web/out/
+frontend-web/.vercel/
+frontend-web/tsconfig.tsbuildinfo
+
+# ─── Docker (volúmenes y datos locales, no el compose) ───────────────────────
+docker-data/
+postgres-data/
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+logs/

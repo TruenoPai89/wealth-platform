@@ -1,0 +1,163 @@
+{
+  "meta": {
+    "portfolioId": "PTF-00142",
+    "clientId": "CLI-00089",
+    "clientName": "Familia Mendoza Ruiz",
+    "baseCurrency": "EUR",
+    "valuationDate": "2026-11-08",
+    "totalMarketValue": 1250430.75,
+    "totalCostBasis": 1098200.00,
+    "totalUnrealizedPnl": 152230.75,
+    "totalUnrealizedPnlPct": 13.86
+  },
+  "positions": [
+    {
+      "isin": "LU0323578657",
+      "ticker": "MVOL",
+      "name": "Xtrackers MSCI World Minimum Volatility ETF",
+      "assetClass": "EQUITY",
+      "subClass": "ETF_GLOBAL",
+      "currency": "EUR",
+      "quantity": 1500,
+      "avgCostPrice": 28.45,
+      "currentPrice": 34.12,
+      "currentValue": 51180.00,
+      "currentWeight": 0.0409,
+      "targetWeight": 0.05,
+      "pnl": {
+        "unrealized": 8505.00,
+        "unrealizedPct": 19.93
+      },
+      "flags": {
+        "isPledged": false,
+        "taxWarning2Month": false,
+        "hasOpenTaxLots": true
+      },
+      "pledgeInfo": null,
+      "taxLotsSummary": {
+        "lotCount": 2,
+        "oldestAcquisitionDate": "2024-03-15",
+        "newestAcquisitionDate": "2024-09-22"
+      }
+    },
+    {
+      "isin": "IE00B4L5Y983",
+      "ticker": "SWDA",
+      "name": "iShares Core MSCI World UCITS ETF",
+      "assetClass": "EQUITY",
+      "subClass": "ETF_GLOBAL",
+      "currency": "USD",
+      "quantity": 8200,
+      "avgCostPrice": 82.30,
+      "currentPrice": 97.65,
+      "currentValue": 800730.00,
+      "currentWeight": 0.6403,
+      "targetWeight": 0.60,
+      "pnl": {
+        "unrealized": 125870.00,
+        "unrealizedPct": 18.65
+      },
+      "flags": {
+        "isPledged": true,
+        "taxWarning2Month": false,
+        "hasOpenTaxLots": true
+      },
+      "pledgeInfo": {
+        "pledgeContractId": "PGN-2025-0033",
+        "pledgedQuantity": 5000,
+        "loanId": "LBD-2025-0019",
+        "ltvRatio": 0.58,
+        "ltvThresholdWarning": 0.65,
+        "ltvThresholdLiquidation": 0.75
+      },
+      "taxLotsSummary": {
+        "lotCount": 4,
+        "oldestAcquisitionDate": "2022-11-10",
+        "newestAcquisitionDate": "2025-01-30"
+      }
+    },
+    {
+      "isin": "IE00B3F81R35",
+      "ticker": "IGLT",
+      "name": "iShares Core UK Gilts UCITS ETF",
+      "assetClass": "FIXED_INCOME",
+      "subClass": "GOVERNMENT_BONDS",
+      "currency": "GBP",
+      "quantity": 3100,
+      "avgCostPrice": 9.85,
+      "currentPrice": 10.22,
+      "currentValue": 31682.00,
+      "currentWeight": 0.0253,
+      "targetWeight": 0.05,
+      "pnl": {
+        "unrealized": 1147.00,
+        "unrealizedPct": 3.76
+      },
+      "flags": {
+        "isPledged": false,
+        "taxWarning2Month": true,
+        "hasOpenTaxLots": true
+      },
+      "pledgeInfo": null,
+      "taxLotsSummary": {
+        "lotCount": 1,
+        "oldestAcquisitionDate": "2026-09-12",
+        "newestAcquisitionDate": "2026-09-12"
+      }
+    },
+    {
+      "isin": "IE00B4WXJJ64",
+      "ticker": "IEGA",
+      "name": "iShares Core € Govt Bond UCITS ETF",
+      "assetClass": "FIXED_INCOME",
+      "subClass": "GOVERNMENT_BONDS",
+      "currency": "EUR",
+      "quantity": 2800,
+      "avgCostPrice": 108.90,
+      "currentPrice": 111.35,
+      "currentValue": 311780.00,
+      "currentWeight": 0.2493,
+      "targetWeight": 0.25,
+      "pnl": {
+        "unrealized": 6860.00,
+        "unrealizedPct": 2.25
+      },
+      "flags": {
+        "isPledged": false,
+        "taxWarning2Month": false,
+        "hasOpenTaxLots": true
+      },
+      "pledgeInfo": null,
+      "taxLotsSummary": {
+        "lotCount": 3,
+        "oldestAcquisitionDate": "2023-06-01",
+        "newestAcquisitionDate": "2025-07-14"
+      }
+    },
+    {
+      "isin": "CASH_EUR",
+      "ticker": "CASH",
+      "name": "Efectivo EUR (Cuenta Ómnibus)",
+      "assetClass": "CASH",
+      "subClass": "CASH",
+      "currency": "EUR",
+      "quantity": 55058.75,
+      "avgCostPrice": 1.0,
+      "currentPrice": 1.0,
+      "currentValue": 55058.75,
+      "currentWeight": 0.0440,
+      "targetWeight": 0.05,
+      "pnl": {
+        "unrealized": 0.0,
+        "unrealizedPct": 0.0
+      },
+      "flags": {
+        "isPledged": false,
+        "taxWarning2Month": false,
+        "hasOpenTaxLots": false
+      },
+      "pledgeInfo": null,
+      "taxLotsSummary": null
+    }
+  ]
+}
