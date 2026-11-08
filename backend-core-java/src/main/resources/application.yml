@@ -28,8 +28,9 @@ wealth:
     # Retardo de liquidacion simulado: pasado este tiempo, los movimientos pasan de "En proceso" a "Completado".
     settlement-delay-seconds: 20
   cors:
-    # Origenes permitidos para /api/** (frontend Next.js en desarrollo). Lista separada por comas.
-    allowed-origins: http://localhost:3000
+    # Patrones de origen permitidos para /api/** (frontend Next.js en desarrollo). Lista separada por comas.
+    # localhost y 127.0.0.1 en cualquier puerto: cubre http://127.0.0.1:3000 y Next en 3001 si el 3000 esta ocupado.
+    allowed-origin-patterns: http://localhost:*,http://127.0.0.1:*
   openjev:
     base-url: http://localhost:8080/v1/systemone
     timeout-ms: 5000

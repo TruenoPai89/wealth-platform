@@ -43,6 +43,30 @@ class CorsIntegrationTest {
     }
 
     @Test
+    void allowsLoopbackIpAndOtherLocalPorts() throws Exception {
+        // Abrir el frontend por 127.0.0.1, o que Next arranque en 3001 si el 3000 esta ocupado, no debe romper la API
+        for (String origin : new String[]{"http://127.0.0.1:3000", "http://localhost:3001"}) {
+            mvc.perform(get(URL).header("Origin", origin))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("Access-Control-Allow-Origin", origin));
+            mvc.perform(options(URL)
+                            .header("Origin", origin)
+                            .header("Access-Control-Request-Method", "GET")
+                            .header("Access-Control-Request-Headers", "content-type"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("Access-Control-Allow-Origin", origin));
+        }
+    }
+
+    @Test
+    void stillRejectsRemoteOriginsAndLookalikeHosts() throws Exception {
+        for (String origin : new String[]{"http://evil.example", "http://localhost.evil.example:3000",
+                "http://192.168.1.10:3000"}) {
+            mvc.perform(get(URL).header("Origin", origin)).andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
     void rejectsUnknownOrigin() throws Exception {
         mvc.perform(get(URL).header("Origin", "http://evil.example"))
                 .andExpect(status().isForbidden());

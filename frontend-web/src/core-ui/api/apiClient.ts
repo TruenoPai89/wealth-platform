@@ -45,9 +45,10 @@ async function request<T>(
     });
   } catch {
     // fetch solo rechaza por red/CORS: backend caído, puerto equivocado u origen no permitido.
+    const origin = typeof window !== "undefined" ? window.location.origin : "(servidor)";
     throw new Error(
       `[apiClient] No se pudo conectar con el backend (${url}). ` +
-        "¿Está arrancado y permite el origen http://localhost:3000 (CORS)?",
+        `¿Está arrancado (mvn spring-boot:run en backend-core-java) y permite el origen ${origin} (CORS)?`,
     );
   }
 
