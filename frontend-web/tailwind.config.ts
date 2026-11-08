@@ -28,11 +28,11 @@ const config: Config = {
           border:  "#2e3348",
         },
         semantic: {
-          gain:    "#22c55e",
-          loss:    "#ef4444",
-          warning: "#f59e0b",
-          pledged: "#a855f7",
-          neutral: "#6b7280",
+          gain:    "rgb(34 197 94 / <alpha-value>)",
+          loss:    "rgb(239 68 68 / <alpha-value>)",
+          warning: "rgb(245 158 11 / <alpha-value>)",
+          pledged: "rgb(168 85 247 / <alpha-value>)",
+          neutral: "rgb(107 114 128 / <alpha-value>)",
         },
       },
       fontFamily: {
