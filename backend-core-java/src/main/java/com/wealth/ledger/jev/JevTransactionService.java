@@ -80,15 +80,56 @@ public class JevTransactionService {
 
     /** Genera y registra el lote de asientos del plan. De momento NO persiste (ver TODO de la clase). */
     public JournalBatch record(RebalancePlan plan) {
-        return record(buildJournal(plan));
+        return log(buildJournal(plan));
     }
 
     /** Genera y registra el lote de una ejecucion con referencia y fecha propias. Tampoco persiste todavia. */
     public JournalBatch record(RebalancePlan plan, String reference, Instant bookedAt) {
-        return record(buildJournal(plan, reference, bookedAt));
+        return log(buildJournal(plan, reference, bookedAt));
     }
 
-    private JournalBatch record(JournalBatch batch) {
+    /**
+     * Asientos de una aportacion de efectivo seguida de las compras que la invierten. El primer asiento
+     * (CONTRIBUTION) ingresa el efectivo contra la cuenta de aportaciones del cliente:
+     * <pre>
+     *   DEBIT ASSETS:CASH:&lt;moneda&gt; (importe)    CREDIT EQUITY:CLIENT_CONTRIBUTIONS (importe)
+     * </pre>
+     * y a continuacion un asiento BUY por orden, igual que en un rebalanceo. netCashMovement = aportacion - compras.
+     */
+    public JournalBatch buildContributionJournal(String portfolioId, String currency, BigDecimal contribution,
+                                                 List<RebalanceOrder> buyOrders, String reference, Instant bookedAt) {
+        String cashAccount = "ASSETS:CASH:" + currency;
+        List<JournalEntry> entries = new ArrayList<>();
+        int seq = 1;
+        entries.add(new JournalEntry(reference + "-" + String.format("%03d", seq++), reference,
+                EntryType.CONTRIBUTION, bookedAt, currency, List.of(
+                new JournalLine(cashAccount, LineSide.DEBIT, contribution, null),
+                new JournalLine("EQUITY:CLIENT_CONTRIBUTIONS", LineSide.CREDIT, contribution, null))));
+        BigDecimal netCash = contribution;
+        for (RebalanceOrder order : buyOrders) {
+            if (order.side() != Side.BUY) {
+                throw new IllegalArgumentException("A contribution only buys; got " + order.side() + " " + order.instrumentId());
+            }
+            entries.add(new JournalEntry(reference + "-" + String.format("%03d", seq++), reference,
+                    EntryType.BUY, bookedAt, currency, List.of(
+                    new JournalLine("ASSETS:CUSTODY:" + order.instrumentId(), LineSide.DEBIT, order.amount(), order.quantity()),
+                    new JournalLine(cashAccount, LineSide.CREDIT, order.amount(), null))));
+            netCash = netCash.subtract(order.amount());
+        }
+        entries.forEach(e -> {
+            if (!e.isBalanced()) {
+                throw new IllegalStateException("Unbalanced journal entry " + e.entryId());
+            }
+        });
+        return new JournalBatch(reference, portfolioId, currency, entries, netCash);
+    }
+
+    /** Registra (log; sin persistir todavia) un lote ya construido, p. ej. el de una aportacion. */
+    public JournalBatch record(JournalBatch batch) {
+        return log(batch);
+    }
+
+    private JournalBatch log(JournalBatch batch) {
         // TODO(PostgreSQL): persistir 'batch' (append-only, idempotente por reference) cuando se active la BBDD.
         log.info("Journal batch {} built ({} entries, net cash movement {}); persistence pending PostgreSQL",
                 batch.reference(), batch.entries().size(), batch.netCashMovement());

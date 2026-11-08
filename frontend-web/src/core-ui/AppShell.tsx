@@ -20,6 +20,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { SlotRegistryProvider } from "@/core-ui/SlotRegistry";
+import { ThemeToggle } from "@/core-ui/ThemeToggle";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -164,7 +165,7 @@ function Topbar({ clientName, sidebarCollapsed, onToggleSidebar }: TopbarProps) 
           <span className="text-white font-bold text-sm">W</span>
         </div>
         {!sidebarCollapsed && (
-          <span className="text-white font-semibold text-sm truncate hidden sm:block">
+          <span className="text-fg font-semibold text-sm truncate hidden sm:block">
             Wealth Platform
           </span>
         )}
@@ -177,13 +178,18 @@ function Topbar({ clientName, sidebarCollapsed, onToggleSidebar }: TopbarProps) 
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <div className="w-2 h-2 rounded-full bg-semantic-gain shrink-0" aria-hidden="true" />
         <span className="text-gray-400 text-xs hidden sm:block">Cliente activo:</span>
-        <span className="text-white text-sm font-medium truncate">{clientName}</span>
+        <span className="text-fg text-sm font-medium truncate">{clientName}</span>
+      </div>
+
+      {/* Modo claro / oscuro */}
+      <div className="ml-auto">
+        <ThemeToggle />
       </div>
 
       {/* Toggle sidebar (mobile) */}
       <button
         onClick={onToggleSidebar}
-        className="ml-auto p-2 rounded-md text-gray-400 hover:text-white hover:bg-surface-overlay transition-colors"
+        className="p-2 rounded-md text-gray-400 hover:text-fg hover:bg-surface-overlay transition-colors"
         aria-label={sidebarCollapsed ? "Expandir navegación" : "Colapsar navegación"}
       >
         {sidebarCollapsed ? <IconChevronRight /> : <IconChevronLeft />}
@@ -213,7 +219,7 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
       ? "bg-brand-600 text-white"
       : isDisabled
         ? "text-gray-600 cursor-not-allowed opacity-50"
-        : "text-gray-400 hover:text-white hover:bg-surface-overlay",
+        : "text-gray-400 hover:text-fg hover:bg-surface-overlay",
   ].join(" ");
 
   const content = (
@@ -316,7 +322,7 @@ export function AppShell({
     // SlotRegistryProvider envuelve TODA la app para que los slots sean
     // accesibles desde cualquier módulo que esté montado en el árbol.
     <SlotRegistryProvider>
-      <div className="flex flex-col h-screen bg-surface-base text-white overflow-hidden">
+      <div className="flex flex-col h-screen bg-surface-base text-fg overflow-hidden">
         {/* Topbar */}
         <Topbar
           clientName={clientName}

@@ -54,7 +54,7 @@ export function OrderPreviewModal({
     >
       <div className="bg-surface-raised border border-surface-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="px-5 pt-5 pb-3">
-          <h2 id="order-preview-title" className="text-lg font-semibold text-white">
+          <h2 id="order-preview-title" className="text-lg font-semibold text-fg">
             Confirmar rebalanceo
           </h2>
           <p className="text-sm text-gray-500 mt-0.5">
@@ -82,7 +82,7 @@ export function OrderPreviewModal({
                     {isBuy ? "COMPRAR" : "VENDER"}
                   </span>
                   <div className="flex flex-col min-w-0">
-                    <span className="text-sm text-white truncate">{o.name}</span>
+                    <span className="text-sm text-fg truncate">{o.name}</span>
                     <span className="text-xs text-gray-500 font-mono">
                       {formatUnits(o.quantity)} uds. × {formatEur(o.price)}
                     </span>
@@ -105,7 +105,7 @@ export function OrderPreviewModal({
           <span className="text-sm text-gray-400">
             {cashLabel} (caja {formatEur(cashFlow.cashBefore)} → {formatEur(cashFlow.cashAfter)})
           </span>
-          <span className="font-mono font-semibold text-sm text-white" data-testid="preview-cash">
+          <span className="font-mono font-semibold text-sm text-fg" data-testid="preview-cash">
             {net > 0 ? "+" : net < 0 ? "-" : ""}
             {formatEur(Math.abs(net))}
           </span>
@@ -122,7 +122,7 @@ export function OrderPreviewModal({
             type="button"
             onClick={onCancel}
             disabled={submitting}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-surface-overlay text-gray-300 hover:text-white disabled:opacity-50"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-surface-overlay text-gray-300 hover:text-fg disabled:opacity-50"
           >
             Cancelar
           </button>

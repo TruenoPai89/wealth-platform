@@ -29,7 +29,8 @@ public record Transfer(
         String journalRef,
         Status status) {
 
-    public enum Type { BUY, SELL, CASH_IN, CASH_OUT }
+    /** CONTRIBUTION: aportacion de efectivo del cliente (p. ej. a una agrupacion), distinta del ajuste neto CASH_IN/OUT. */
+    public enum Type { BUY, SELL, CASH_IN, CASH_OUT, CONTRIBUTION }
 
     public enum Status { IN_PROGRESS, COMPLETED }
 

@@ -37,6 +37,26 @@ wealth:
   ledger:
     # Foto exportada por OpenJEV (temporal). Ruta relativa al directorio de trabajo (backend-core-java/).
     mock-file: ../bank-simulator-mocks/api-json-responses/client_portfolio_jev.json
+  baskets:
+    # Agrupaciones de fondos (cestas / model portfolios) por cartera. Los pesos son RELATIVOS y se normalizan a
+    # suma 1 (1,1,1 = tres fondos al 33,3 %). Solo fondos de la cartera; el efectivo no puede ir en una cesta.
+    by-portfolio:
+      PF-001:
+        agrupacion-1:
+          name: "Agrupación 1"
+          description: "Renta variable global, EE. UU. y renta fija a partes iguales"
+          weights:
+            IE00B4L5Y983: 1   # iShares Core MSCI World
+            IE00B3XXRP09: 1   # Vanguard S&P 500
+            IE00B4WXJJ64: 1   # iShares Core Euro Govt Bond
+        agrupacion-2:
+          name: "Agrupación 2"
+          description: "Cuatro fondos con distribución personalizada"
+          weights:
+            IE00B4L5Y983: 40  # iShares Core MSCI World
+            IE00B3XXRP09: 30  # Vanguard S&P 500
+            IE00B4WXJJ64: 20  # iShares Core Euro Govt Bond
+            IE00B579F325: 10  # Invesco Physical Gold
   rebalancer:
     # Pesos objetivo por portfolioId. Suma 1.0; el efectivo es un peso mas (CASH:<moneda>).
     # Las claves con ':' necesitan notacion de corchetes para el binder de Spring.

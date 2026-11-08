@@ -40,7 +40,7 @@ export function PortfolioViewToggle({ mode, onChange }: PortfolioViewToggleProps
             className={[
               "px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
-              active ? "bg-brand-600 text-white" : "text-gray-400 hover:text-white",
+              active ? "bg-brand-600 text-white" : "text-gray-400 hover:text-fg",
             ].join(" ")}
           >
             {o.label}

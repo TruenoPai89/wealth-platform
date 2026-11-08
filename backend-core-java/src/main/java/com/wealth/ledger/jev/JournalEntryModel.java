@@ -56,7 +56,8 @@ public final class JournalEntryModel {
 
     // ---- Asientos de partida doble (salida del modulo 1 hacia el journal inmutable) ----
 
-    public enum EntryType { BUY, SELL }
+    /** CONTRIBUTION: ingreso de efectivo del cliente (aportacion); BUY / SELL: operaciones sobre fondos. */
+    public enum EntryType { BUY, SELL, CONTRIBUTION }
 
     public enum LineSide { DEBIT, CREDIT }
 

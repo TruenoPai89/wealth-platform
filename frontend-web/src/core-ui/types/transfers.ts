@@ -12,8 +12,9 @@ import type { CashFlowSummary } from "@/core-ui/types/rebalancePlan";
 /**
  * BUY / SELL: una por orden. CASH_IN / CASH_OUT: ajuste NETO de efectivo de la ejecución
  * (ventas - compras): es el resumen del efecto en caja, no un movimiento adicional de dinero.
+ * CONTRIBUTION: aportación de efectivo del cliente a una agrupación (ingreso, liquidado al instante).
  */
-export type TransferType = "BUY" | "SELL" | "CASH_IN" | "CASH_OUT";
+export type TransferType = "BUY" | "SELL" | "CASH_IN" | "CASH_OUT" | "CONTRIBUTION";
 
 /** El backend lo calcula al leer: IN_PROGRESS hasta la liquidación simulada y COMPLETED después. */
 export type TransferStatus = "IN_PROGRESS" | "COMPLETED";

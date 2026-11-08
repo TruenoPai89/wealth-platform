@@ -25,7 +25,7 @@ interface SummaryItemProps {
 
 function SummaryItem({ label, value, tone = "neutral" }: SummaryItemProps) {
   const color =
-    tone === "gain" ? "text-semantic-gain" : tone === "loss" ? "text-semantic-loss" : "text-white";
+    tone === "gain" ? "text-semantic-gain" : tone === "loss" ? "text-semantic-loss" : "text-fg";
   return (
     <div className="flex flex-col gap-0.5">
       <span className="text-xs text-gray-500 uppercase tracking-wider">{label}</span>
@@ -43,7 +43,7 @@ export function RebalanceOrdersPanel({ plan }: { plan: RebalancePlan }) {
       aria-label="Órdenes de rebalanceo"
     >
       <div className="px-5 pt-5 pb-3">
-        <h2 className="text-lg font-semibold text-white">Órdenes de rebalanceo</h2>
+        <h2 className="text-lg font-semibold text-fg">Órdenes de rebalanceo</h2>
         <p className="text-sm text-gray-500 mt-0.5">
           {orders.length === 0
             ? "La cartera ya está en su meta: no hay nada que operar."
@@ -91,11 +91,11 @@ export function RebalanceOrdersPanel({ plan }: { plan: RebalancePlan }) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col">
-                        <span className="text-white">{o.name}</span>
+                        <span className="text-fg">{o.name}</span>
                         <span className="text-xs text-gray-500 font-mono">{o.instrumentId}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-white">
+                    <td className="px-4 py-3 text-right font-mono text-fg">
                       {formatUnits(o.quantity)}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-gray-300">

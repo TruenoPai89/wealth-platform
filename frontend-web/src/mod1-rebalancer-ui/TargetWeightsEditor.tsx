@@ -83,7 +83,7 @@ export function TargetWeightsEditor({
       aria-label="Editor de meta de balanceo"
     >
       <div>
-        <h2 className="text-lg font-semibold text-white">Meta de balanceo</h2>
+        <h2 className="text-lg font-semibold text-fg">Meta de balanceo</h2>
         <p className="text-sm text-gray-500 mt-0.5">
           Define qué porcentaje de tu cartera quieres en cada activo. Debe sumar 100 %.
         </p>
@@ -98,7 +98,7 @@ export function TargetWeightsEditor({
               className="flex items-center justify-between gap-3 bg-surface-overlay/40 rounded-lg px-3 py-2"
             >
               <span className="flex flex-col min-w-0">
-                <span className="text-sm text-white truncate">{p.name}</span>
+                <span className="text-sm text-fg truncate">{p.name}</span>
                 <span className="text-xs text-gray-500 font-mono">{p.instrumentId}</span>
               </span>
               <span className="flex items-center gap-1 shrink-0">
@@ -111,7 +111,7 @@ export function TargetWeightsEditor({
                     setValues((prev) => ({ ...prev, [p.instrumentId]: e.target.value }))
                   }
                   className={[
-                    "w-20 text-right font-mono text-sm bg-surface-base border rounded-md px-2 py-1 text-white",
+                    "w-20 text-right font-mono text-sm bg-surface-base border rounded-md px-2 py-1 text-fg",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
                     invalid ? "border-semantic-loss" : "border-surface-border",
                   ].join(" ")}
@@ -136,7 +136,7 @@ export function TargetWeightsEditor({
             type="button"
             onClick={onCancel}
             disabled={saving}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-surface-overlay text-gray-300 hover:text-white disabled:opacity-50"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-surface-overlay text-gray-300 hover:text-fg disabled:opacity-50"
           >
             Cancelar
           </button>

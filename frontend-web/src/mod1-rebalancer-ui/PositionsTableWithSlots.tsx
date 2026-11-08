@@ -187,7 +187,7 @@ function PositionRow({ position, isEven }: { position: AssetPosition; isEven: bo
         <td className="px-4 py-3">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-sm text-white font-semibold">{displayId}</span>
+              <span className="font-mono text-sm text-fg font-semibold">{displayId}</span>
               <AssetClassBadge assetClass={position.assetClass} />
               {/* ── SLOT: StatusBadgeSlot ───────────────────────────────────
                   Módulo 2 → TwoMonthWarningBadge
@@ -216,7 +216,7 @@ function PositionRow({ position, isEven }: { position: AssetPosition; isEven: bo
         {/* Valor mercado + orden propuesta */}
         <td className="px-4 py-3">
           <div className="flex flex-col gap-1 items-end">
-            <span className="text-sm text-white font-medium font-mono">
+            <span className="text-sm text-fg font-medium font-mono">
               {fmtEur(position.marketValue)}
             </span>
             <span className="text-xs text-gray-500">
@@ -271,7 +271,7 @@ function TableHeader({ plan }: { plan: RebalancePlan }) {
     <div className="flex flex-col gap-4 mb-6">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-white">Posiciones de Cartera</h2>
+          <h2 className="text-xl font-semibold text-fg">Posiciones de Cartera</h2>
           <p className="text-sm text-gray-500 mt-0.5">
             Portfolio{" "}
             <span className="font-mono text-gray-400">{plan.portfolioId}</span>
@@ -332,7 +332,7 @@ function KpiCard({ label, value, sub, accent }: {
   label: string; value: string; sub?: string;
   accent: "gain" | "loss" | "neutral" | "warning";
 }) {
-  const c = { gain: "text-semantic-gain", loss: "text-semantic-loss", warning: "text-semantic-warning", neutral: "text-white" }[accent];
+  const c = { gain: "text-semantic-gain", loss: "text-semantic-loss", warning: "text-semantic-warning", neutral: "text-fg" }[accent];
   return (
     <div className="bg-surface-raised border border-surface-border rounded-lg px-4 py-3">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
@@ -351,7 +351,7 @@ function CashFlowPanel({ cashFlow }: { cashFlow: CashFlowSummary }) {
       <div className="flex flex-wrap gap-6 text-sm">
         <div>
           <p className="text-xs text-gray-600">Efectivo inicial</p>
-          <p className="font-mono text-white">{fmtEur(cashFlow.cashBefore)}</p>
+          <p className="font-mono text-fg">{fmtEur(cashFlow.cashBefore)}</p>
         </div>
         <div>
           <p className="text-xs text-gray-600">Total ventas</p>
@@ -369,7 +369,7 @@ function CashFlowPanel({ cashFlow }: { cashFlow: CashFlowSummary }) {
         </div>
         <div>
           <p className="text-xs text-gray-600">Efectivo final</p>
-          <p className="font-mono text-white font-semibold">{fmtEur(cashFlow.cashAfter)}</p>
+          <p className="font-mono text-fg font-semibold">{fmtEur(cashFlow.cashAfter)}</p>
         </div>
       </div>
     </div>
@@ -422,7 +422,7 @@ export function PositionsTableWithSlots({ plan, isLoading = false, error = null 
                     Total — {plan.positions.length} posiciones
                   </td>
                   <td className="px-4 py-3" />
-                  <td className="px-4 py-3 text-right font-mono font-semibold text-white text-sm">
+                  <td className="px-4 py-3 text-right font-mono font-semibold text-fg text-sm">
                     {fmtEur(plan.totalValue)}
                   </td>
                   <td className="px-4 py-3" />

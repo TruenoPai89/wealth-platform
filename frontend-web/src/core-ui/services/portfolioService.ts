@@ -14,8 +14,45 @@ import { apiClient } from "@/core-ui/api/apiClient";
 import { fetchRebalancePlan as fetchMockPlan } from "@/core-ui/services/mockPortfolioService";
 import type { RebalancePlan } from "@/core-ui/types/rebalancePlan";
 import type { RebalanceExecution, Transfer } from "@/core-ui/types/transfers";
+import type {
+  Basket,
+  ContributionExecution,
+  ContributionPlan,
+} from "@/core-ui/types/baskets";
 
 export const USE_MOCK = process.env["NEXT_PUBLIC_USE_MOCK"] === "true";
+
+/** Agrupaciones (cestas) de fondos de la cartera. */
+export function fetchBaskets(portfolioId: string): Promise<Basket[]> {
+  return apiClient.get<Basket[]>(`/portfolios/${encodeURIComponent(portfolioId)}/baskets`);
+}
+
+/** Vista previa SIN efectos: qué se compraría de cada fondo con `amount` euros (solo compras). */
+export function previewContribution(
+  portfolioId: string,
+  basketId: string,
+  amount: number,
+): Promise<ContributionPlan> {
+  return apiClient.post<ContributionPlan>(
+    `/portfolios/${encodeURIComponent(portfolioId)}/baskets/${encodeURIComponent(basketId)}/contribution/preview`,
+    { amount },
+  );
+}
+
+/**
+ * Invierte la aportación en la agrupación: el backend recalcula, genera los asientos y registra la Aportación y una
+ * Compra por fondo. 400 si el importe no es válido; 404 si la cesta no existe.
+ */
+export function executeContribution(
+  portfolioId: string,
+  basketId: string,
+  amount: number,
+): Promise<ContributionExecution> {
+  return apiClient.post<ContributionExecution>(
+    `/portfolios/${encodeURIComponent(portfolioId)}/baskets/${encodeURIComponent(basketId)}/contribution`,
+    { amount },
+  );
+}
 
 /** Llama al endpoint real y devuelve el plan tal cual. */
 export function fetchRebalancePlan(portfolioId: string): Promise<RebalancePlan> {

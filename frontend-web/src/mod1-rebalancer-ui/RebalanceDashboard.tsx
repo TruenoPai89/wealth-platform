@@ -26,16 +26,22 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { RebalancePlan } from "@/core-ui/types/rebalancePlan";
 import type { RebalanceExecution } from "@/core-ui/types/transfers";
+import type { Basket, ContributionExecution } from "@/core-ui/types/baskets";
 import {
   executeRebalance,
+  fetchBaskets,
   loadPortfolio,
   updateTargets,
   USE_MOCK,
 } from "@/core-ui/services/portfolioService";
+import { formatEur } from "@/core-ui/format";
 import {
   toDisplayPlan,
   type PortfolioViewMode,
 } from "@/core-ui/services/rebalancePlanAdapter";
+import { AllocationCharts } from "@/mod1-rebalancer-ui/AllocationCharts";
+import { BasketsPanel } from "@/mod1-rebalancer-ui/BasketsPanel";
+import { ContributionModal } from "@/mod1-rebalancer-ui/ContributionModal";
 import { OrderPreviewModal } from "@/mod1-rebalancer-ui/OrderPreviewModal";
 import { PortfolioViewToggle } from "@/mod1-rebalancer-ui/PortfolioViewToggle";
 import { PositionsTableWithSlots } from "@/mod1-rebalancer-ui/PositionsTableWithSlots";
@@ -109,6 +115,22 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
   const [submitting, setSubmitting] = useState(false);
   const [executeError, setExecuteError] = useState<string | null>(null);
   const [lastExecution, setLastExecution] = useState<RebalanceExecution | null>(null);
+  // Agrupaciones (cestas) y aportación de efectivo («Invertir en Agrupación»)
+  const [baskets, setBaskets] = useState<Basket[]>([]);
+  const [investing, setInvesting] = useState<Basket | null>(null);
+  const [lastContribution, setLastContribution] = useState<ContributionExecution | null>(null);
+
+  // Las cestas no cambian al operar (solo su peso real), así que se cargan una vez. Sin backend (mock) no hay.
+  useEffect(() => {
+    if (USE_MOCK) return;
+    let cancelled = false;
+    fetchBaskets(portfolioId)
+      .then((b) => !cancelled && setBaskets(b))
+      .catch(() => !cancelled && setBaskets([])); // sin cestas se oculta el panel; el resto de la pantalla sigue
+    return () => {
+      cancelled = true;
+    };
+  }, [portfolioId]);
 
   // La vista se deriva del plan en cada render: alternar no vuelve a llamar al backend.
   // Si el Módulo 2 ha enriquecido las posiciones, se usan esas (con taxSummary).
@@ -163,12 +185,22 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
     setExecuteError(null);
   }
 
+  /** La aportación se ha ejecutado: se cierra el modal y se recarga la cartera con el dinero ya invertido. */
+  async function handleContributionExecuted(execution: ContributionExecution) {
+    setInvesting(null);
+    setLastContribution(execution);
+    setLastExecution(null);
+    setShowOrders(false); // una propuesta de rebalanceo anterior ya no es válida: la cartera ha cambiado
+    setViewMode("current");
+    await refetch();
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
       {/* Barra de acciones */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-white">Mis Inversiones</h1>
+          <h1 className="text-2xl font-bold text-fg">Mis Inversiones</h1>
           <p className="text-sm text-gray-500 mt-0.5">Rebalanceador de cartera — Módulo 1</p>
         </div>
         <div className="flex items-center gap-2">
@@ -182,7 +214,7 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
               type="button"
               onClick={() => setEditingTargets((v) => !v)}
               disabled={isLoading}
-              className={`${BUTTON_BASE} bg-surface-overlay text-gray-200 hover:text-white border border-surface-border`}
+              className={`${BUTTON_BASE} bg-surface-overlay text-gray-200 hover:text-fg border border-surface-border`}
             >
               Editar meta
             </button>
@@ -206,6 +238,27 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
           onSave={handleSaveTargets}
           onCancel={() => setEditingTargets(false)}
         />
+      )}
+
+      {/* Resultado de la última aportación a una agrupación */}
+      {lastContribution && (
+        <div
+          className="flex items-center justify-between gap-3 flex-wrap rounded-xl border border-semantic-gain/40 bg-semantic-gain/10 px-5 py-3"
+          role="status"
+          data-testid="contribution-banner"
+        >
+          <p className="text-sm text-semantic-gain">
+            Aportación de {formatEur(lastContribution.plan.amount)} invertida en {lastContribution.basketName}:{" "}
+            {lastContribution.transfers.length} movimientos registrados (
+            <span className="font-mono">{lastContribution.executionId}</span>).
+          </p>
+          <Link
+            href="/transferencias"
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-semantic-gain/20 text-semantic-gain hover:bg-semantic-gain/30"
+          >
+            Ver transferencias
+          </Link>
+        </div>
       )}
 
       {/* Resultado de la última ejecución: enlaza con el historial de «Transferencias» */}
@@ -273,6 +326,33 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
 
       {/* Tabla principal */}
       <PositionsTableWithSlots plan={displayPlan} isLoading={isLoading} error={error} />
+
+      {/* Distribución de la cartera: sigue la vista de la tabla (actual o proyectada) */}
+      {displayPlan && !isLoading && !error && (
+        <AllocationCharts
+          positions={displayPlan.positions}
+          viewLabel={viewMode === "projected" ? "Cartera proyectada" : "Cartera actual"}
+        />
+      )}
+
+      {/* Agrupaciones de fondos: «Invertir en Agrupación» (aportación de efectivo) */}
+      {plan && !USE_MOCK && !error && baskets.length > 0 && (
+        <BasketsPanel
+          baskets={baskets}
+          nameOf={Object.fromEntries(plan.positions.map((p) => [p.instrumentId, p.name]))}
+          onInvest={setInvesting}
+          disabled={isLoading}
+        />
+      )}
+
+      {investing && (
+        <ContributionModal
+          portfolioId={portfolioId}
+          basket={investing}
+          onClose={() => setInvesting(null)}
+          onExecuted={(execution) => void handleContributionExecuted(execution)}
+        />
+      )}
     </div>
   );
 }

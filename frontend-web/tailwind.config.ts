@@ -1,5 +1,13 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * Tema claro/oscuro: los colores de superficie, texto y gris de la UI son VARIABLES CSS (definidas en
+ * src/app/globals.css para :root/.dark y .light) con formato "R G B" para que sigan funcionando las opacidades
+ * (bg-surface-overlay/50, text-gray-500/80...). Cambiar de tema = cambiar la clase de <html>; ningún componente
+ * necesita variantes dark:.
+ */
+const withVar = (name: string) => `rgb(var(${name}) / <alpha-value>)`;
+
 const config: Config = {
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
@@ -22,16 +30,27 @@ const config: Config = {
           950: "#141455",
         },
         surface: {
-          base:    "#0f1117",
-          raised:  "#1a1d27",
-          overlay: "#22263a",
-          border:  "#2e3348",
+          base:    withVar("--surface-base"),
+          raised:  withVar("--surface-raised"),
+          overlay: withVar("--surface-overlay"),
+          border:  withVar("--surface-border"),
+        },
+        // Texto principal (blanco en oscuro, casi negro en claro). El texto sobre fondos de marca sigue siendo text-white.
+        fg: withVar("--fg"),
+        // Escala de grises de texto: se invierte en el tema claro para mantener el contraste sobre fondo blanco.
+        gray: {
+          200: withVar("--gray-200"),
+          300: withVar("--gray-300"),
+          400: withVar("--gray-400"),
+          500: withVar("--gray-500"),
+          600: withVar("--gray-600"),
+          700: withVar("--gray-700"),
         },
         semantic: {
-          gain:    "rgb(34 197 94 / <alpha-value>)",
-          loss:    "rgb(239 68 68 / <alpha-value>)",
-          warning: "rgb(245 158 11 / <alpha-value>)",
-          pledged: "rgb(168 85 247 / <alpha-value>)",
+          gain:    withVar("--c-gain"),
+          loss:    withVar("--c-loss"),
+          warning: withVar("--c-warning"),
+          pledged: withVar("--c-pledged"),
           neutral: "rgb(107 114 128 / <alpha-value>)",
         },
       },

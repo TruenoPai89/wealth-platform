@@ -8,6 +8,68 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
+/*
+  ─── Temas ─────────────────────────────────────────────────────────────────
+  Los valores son "R G B" (sin rgb()) para que Tailwind pueda aplicar opacidad.
+  Oscuro = por defecto (clase .dark en <html>, también si no hay clase). Claro = clase .light.
+  Verde/rojo financieros: en claro se oscurecen (green-600 / red-600) para mantener el contraste sobre blanco.
+*/
+:root,
+.dark {
+  color-scheme: dark;
+  --surface-base: 15 17 23;
+  --surface-raised: 26 29 39;
+  --surface-overlay: 34 38 58;
+  --surface-border: 46 51 72;
+  --fg: 255 255 255;
+  --gray-200: 229 231 235;
+  --gray-300: 209 213 219;
+  --gray-400: 156 163 175;
+  --gray-500: 107 114 128;
+  --gray-600: 75 85 99;
+  --gray-700: 55 65 81;
+  --c-gain: 34 197 94;
+  --c-loss: 239 68 68;
+  --c-warning: 245 158 11;
+  --c-pledged: 168 85 247;
+  --scrollbar-thumb: #2e3348;
+  --scrollbar-thumb-hover: #3f4660;
+}
+
+.light {
+  color-scheme: light;
+  --surface-base: 241 245 249;      /* slate-100 */
+  --surface-raised: 255 255 255;
+  --surface-overlay: 226 232 240;   /* slate-200 */
+  --surface-border: 203 213 225;    /* slate-300 */
+  --fg: 15 23 42;                   /* slate-900 */
+  --gray-200: 30 41 59;             /* slate-800 */
+  --gray-300: 51 65 85;             /* slate-700 */
+  --gray-400: 71 85 105;            /* slate-600 */
+  --gray-500: 100 116 139;          /* slate-500 */
+  --gray-600: 100 116 139;          /* = gray-500: el texto tenue sigue sobre 4,5:1 en blanco */
+  --gray-700: 116 130 150;          /* solo decorativo (separadores) */
+  --c-gain: 21 128 61;              /* green-700: 5,0:1 sobre blanco (green-600 solo daba 3,3:1) */
+  --c-loss: 220 38 38;              /* red-600: 4,8:1 */
+  --c-warning: 180 83 9;            /* amber-700 */
+  --c-pledged: 126 34 206;          /* purple-700 */
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+}
+
+/* Colores de acento fijos de Tailwind (etiquetas de clase de activo, avisos): más oscuros sobre fondo claro. */
+.light .text-blue-400 { color: rgb(29 78 216); }
+.light .text-teal-400 { color: rgb(15 118 110); }
+.light .text-yellow-400 { color: rgb(161 98 7); }
+.light .text-orange-400 { color: rgb(194 65 12); }
+.light .text-purple-400 { color: rgb(126 34 206); }
+.light .bg-yellow-400 { background-color: rgb(202 138 4); }
+/* Badge "Backend en vivo": fondo de marca muy oscuro en tema oscuro; versión suave en claro. */
+.light .bg-brand-950 { background-color: rgb(224 231 255); }
+.light .border-brand-800 { border-color: rgb(165 180 252); }
+.light .text-brand-300 { color: rgb(55 48 163); }
+.light .bg-brand-400 { background-color: rgb(79 70 229); }
+
 /* ─── Reset y base ───────────────────────────────────────────────────────── */
 *,
 *::before,
@@ -20,7 +82,21 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Scrollbar personalizada (tema oscuro) ─────────────────────────────── */
+/* Cambio de tema suave solo en los colores (no afecta a animaciones de layout) */
+body,
+header,
+aside,
+main,
+table,
+section,
+div,
+button,
+input {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+}
+
+/* ─── Scrollbar personalizada ────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -31,12 +107,12 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #2e3348; /* surface-border */
+  background-color: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #3f4660;
+  background-color: var(--scrollbar-thumb-hover);
 }
 
 /* ─── Utilidades de accesibilidad ───────────────────────────────────────── */

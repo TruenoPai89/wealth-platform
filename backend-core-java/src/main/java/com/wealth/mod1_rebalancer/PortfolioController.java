@@ -41,12 +41,41 @@ public class PortfolioController {
     private final RebalanceOrchestrator orchestrator;
     private final TargetAllocationService targets;
     private final RebalanceExecutionService execution;
+    private final BasketService baskets;
+    private final ContributionService contributions;
 
     public PortfolioController(RebalanceOrchestrator orchestrator, TargetAllocationService targets,
-                               RebalanceExecutionService execution) {
+                               RebalanceExecutionService execution, BasketService baskets,
+                               ContributionService contributions) {
         this.orchestrator = orchestrator;
         this.targets = targets;
         this.execution = execution;
+        this.baskets = baskets;
+        this.contributions = contributions;
+    }
+
+    /** Cuerpo de las peticiones de aportacion: importe en euros (hasta 2 decimales). */
+    public record ContributionRequest(BigDecimal amount) {
+    }
+
+    @GetMapping("/{portfolioId}/baskets")
+    public List<Basket> baskets(@PathVariable String portfolioId) {
+        return baskets.list(portfolioId);
+    }
+
+    /** Vista previa sin efectos: que se compraria de cada fondo de la agrupacion con ese importe. */
+    @PostMapping("/{portfolioId}/baskets/{basketId}/contribution/preview")
+    public ContributionPlan previewContribution(@PathVariable String portfolioId, @PathVariable String basketId,
+                                                @RequestBody ContributionRequest request) {
+        return contributions.preview(portfolioId, basketId, request.amount());
+    }
+
+    /** Ejecuta la aportacion: asientos, movimientos (Aportacion + Compras) y actualizacion de la cartera. */
+    @PostMapping("/{portfolioId}/baskets/{basketId}/contribution")
+    public ContributionService.ContributionExecution contribute(@PathVariable String portfolioId,
+                                                                @PathVariable String basketId,
+                                                                @RequestBody ContributionRequest request) {
+        return contributions.execute(portfolioId, basketId, request.amount());
     }
 
     @GetMapping("/{portfolioId}/rebalance")

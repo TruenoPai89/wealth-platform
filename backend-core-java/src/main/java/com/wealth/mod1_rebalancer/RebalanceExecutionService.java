@@ -61,8 +61,17 @@ public class RebalanceExecutionService {
         this.clock = clock;
     }
 
-    /** Serializado: dos ejecuciones simultaneas sobre el mismo estado duplicarian los movimientos. */
-    public synchronized RebalanceExecution execute(String portfolioId) {
+    /**
+     * Serializado con las aportaciones (mismo cerrojo: el ledger): dos escrituras simultaneas sobre el mismo
+     * estado duplicarian los movimientos.
+     */
+    public RebalanceExecution execute(String portfolioId) {
+        synchronized (ledger) {
+            return executeLocked(portfolioId);
+        }
+    }
+
+    private RebalanceExecution executeLocked(String portfolioId) {
         RebalancePlan plan = orchestrator.rebalance(portfolioId);
         if (plan.orders().isEmpty()) {
             throw new NothingToExecuteException(

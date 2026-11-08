@@ -27,14 +27,16 @@ const TYPE_LABEL: Record<TransferType, string> = {
   SELL: "Venta",
   CASH_IN: "Entrada de efectivo",
   CASH_OUT: "Salida de efectivo",
+  CONTRIBUTION: "Aportación",
 };
 
-/** Verde = suma (compra, entrada de caja), rojo = resta (venta, salida): misma semántica que las órdenes. */
+/** Verde = suma (compra, entrada de caja, aportación), rojo = resta (venta, salida): misma semántica que las órdenes. */
 const POSITIVE: Record<TransferType, boolean> = {
   BUY: true,
   SELL: false,
   CASH_IN: true,
   CASH_OUT: false,
+  CONTRIBUTION: true,
 };
 
 const STATUS_LABEL: Record<TransferStatus, string> = {
@@ -91,7 +93,7 @@ export function TransfersHistory({ portfolioId }: { portfolioId: string }) {
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-white">Transferencias</h1>
+          <h1 className="text-2xl font-bold text-fg">Transferencias</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             Historial de movimientos, transferencias de efectivo y ejecuciones de órdenes
             {inProgress > 0 ? ` · ${inProgress} en proceso` : ""}
@@ -99,7 +101,7 @@ export function TransfersHistory({ portfolioId }: { portfolioId: string }) {
         </div>
         <Link
           href="/"
-          className="px-4 py-2 rounded-lg text-sm font-medium bg-surface-overlay text-gray-200 hover:text-white border border-surface-border"
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-surface-overlay text-gray-200 hover:text-fg border border-surface-border"
         >
           Ir a Mis Inversiones
         </Link>
@@ -168,11 +170,13 @@ export function TransfersHistory({ portfolioId }: { portfolioId: string }) {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
-                          <span className="text-white">{t.name}</span>
+                          <span className="text-fg">{t.name}</span>
                           <span className="text-xs text-gray-500 font-mono">
-                            {isCash
-                              ? "Ajuste neto de la ejecución"
-                              : `${formatUnits(t.quantity ?? 0)} uds.`}
+                            {t.type === "CONTRIBUTION"
+                              ? "Ingreso de efectivo del cliente"
+                              : isCash
+                                ? "Ajuste neto de la ejecución"
+                                : `${formatUnits(t.quantity ?? 0)} uds.`}
                             {" · "}
                             {t.journalRef}
                           </span>
