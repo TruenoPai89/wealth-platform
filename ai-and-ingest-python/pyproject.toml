@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-and-ingest-python"
+version = "0.1.0"
+description = "AI and document ingestion service"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "anthropic",
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "python-dotenv",
+    "pymupdf",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "httpx",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
