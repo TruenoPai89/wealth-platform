@@ -77,3 +77,6 @@ logs/
 # Artefactos locales de editor (extensiones de VS Code / Metals): no versionar
 .history/
 .metals/
+
+# Cache de extracciones de contratos (servicio Python, modulo 4)
+.cache_extracciones/
