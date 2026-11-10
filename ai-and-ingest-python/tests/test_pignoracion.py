@@ -7,12 +7,16 @@ from pathlib import Path
 import pytest
 
 from app.advisor_llm import pledge_extractor
-from app.advisor_llm.pledge_explainer import explicar_estado
+from app.advisor_llm.pledge_explainer import (
+    explicacion_plantilla,
+    explicar_estado,
+)
 from app.advisor_llm.pledge_extractor import (
     ExtraccionFallida,
     extraer_terminos,
 )
 from scripts.evaluar_extraccion import comparar
+from app.advisor_llm.verificador_cifras import cifras_no_respaldadas
 
 
 # ------------------------------------------------------------
@@ -305,3 +309,12 @@ def test_explicacion_con_cifra_inventada_acaba_en_plantilla():
 
     assert resultado["fuente"] == "plantilla"
     assert resultado["intentos"] == 2
+
+def test_plantilla_verificada():
+    """Comprueba que la plantilla no contiene cifras sin respaldo."""
+
+    texto = explicacion_plantilla(ESTADO)
+
+    assert cifras_no_respaldadas(texto, ESTADO) == []
+    assert "2.936,25 EUR" in texto
+    assert "73,31 %" in texto
