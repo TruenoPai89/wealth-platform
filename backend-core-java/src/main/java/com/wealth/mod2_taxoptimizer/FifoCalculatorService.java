@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import com.wealth.mod3_irpf.SavingsTaxScale;
 
 /**
  * Motor FIFO del Módulo 2 (Optimizador Fiscal).
@@ -20,26 +21,18 @@ import java.util.Objects;
  * <strong>Precisión:</strong> todos los cálculos usan {@link BigDecimal}. Prohibido
  * {@code double}/{@code float}.
  * <p>
- * <strong>Tramos IRPF ahorro (art. 66 LIRPF, vigentes desde 2023):</strong>
+ * <strong>Tramos IRPF ahorro (art. 66 LIRPF, escala 2025-2026):</strong> se delega en
+ * {@link SavingsTaxScale} (módulo 3), que es la única fuente de tramos de la aplicación.
  * <ul>
  *   <li>Hasta 6.000 € → 19 %</li>
  *   <li>De 6.000 € a 50.000 € → 21 %</li>
  *   <li>De 50.000 € a 200.000 € → 23 %</li>
- *   <li>Más de 200.000 € → 28 %</li>
+ *   <li>De 200.000 € a 300.000 € → 27 %</li>
+ *   <li>Más de 300.000 € → 30 %</li>
  * </ul>
  */
 @Service
 public class FifoCalculatorService {
-
-    // Tramos IRPF ahorro (en euros)
-    private static final BigDecimal TRAMO_1_LIMITE = new BigDecimal("6000");
-    private static final BigDecimal TRAMO_2_LIMITE = new BigDecimal("50000");
-    private static final BigDecimal TRAMO_3_LIMITE = new BigDecimal("200000");
-
-    private static final BigDecimal TIPO_TRAMO_1 = new BigDecimal("0.19");
-    private static final BigDecimal TIPO_TRAMO_2 = new BigDecimal("0.21");
-    private static final BigDecimal TIPO_TRAMO_3 = new BigDecimal("0.23");
-    private static final BigDecimal TIPO_TRAMO_4 = new BigDecimal("0.28");
 
     private final TaxLotRepository repository;
 
@@ -202,47 +195,14 @@ public class FifoCalculatorService {
     }
 
     /**
-     * Calcula el impuesto estimado aplicando los tramos de la base imponible del
-     * ahorro del IRPF español (art. 66 LIRPF, en vigor desde ejercicio 2023).
+     * Impuesto estimado de una plusvalia aplicando la escala del ahorro vigente.
+     * Delega en {@link SavingsTaxScale} (modulo 3): una unica fuente de tramos en toda la app.
      *
-     * @param gainLoss plusvalía total (debe ser &gt; 0; si hay minusvalía no se llama).
+     * @param gainLoss plusvalia total (si es <= 0 devuelve 0).
      * @return impuesto estimado con 2 decimales.
      */
     public BigDecimal computeIrpfTax(BigDecimal gainLoss) {
-        if (gainLoss.signum() <= 0) return BigDecimal.ZERO;
-
-        BigDecimal tax = BigDecimal.ZERO;
-        BigDecimal base = gainLoss;
-
-        // Tramo 1: 0 – 6.000 €  →  19 %
-        if (base.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal inTramo = base.min(TRAMO_1_LIMITE);
-            tax = tax.add(inTramo.multiply(TIPO_TRAMO_1));
-            base = base.subtract(inTramo);
-        }
-
-        // Tramo 2: 6.000 – 50.000 €  →  21 %
-        if (base.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal width = TRAMO_2_LIMITE.subtract(TRAMO_1_LIMITE);
-            BigDecimal inTramo = base.min(width);
-            tax = tax.add(inTramo.multiply(TIPO_TRAMO_2));
-            base = base.subtract(inTramo);
-        }
-
-        // Tramo 3: 50.000 – 200.000 €  →  23 %
-        if (base.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal width = TRAMO_3_LIMITE.subtract(TRAMO_2_LIMITE);
-            BigDecimal inTramo = base.min(width);
-            tax = tax.add(inTramo.multiply(TIPO_TRAMO_3));
-            base = base.subtract(inTramo);
-        }
-
-        // Tramo 4: > 200.000 €  →  28 %
-        if (base.compareTo(BigDecimal.ZERO) > 0) {
-            tax = tax.add(base.multiply(TIPO_TRAMO_4));
-        }
-
-        return tax.setScale(2, RoundingMode.HALF_UP);
+        return SavingsTaxScale.COMMON_2025_2026.tax(gainLoss);
     }
 
     // =========================================================================
