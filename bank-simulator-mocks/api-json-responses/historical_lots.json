@@ -1,0 +1,24 @@
+{
+  "source": "BROKER_MOCK",
+  "schemaVersion": 1,
+  "asOf": "2026-11-09",
+  "portfolioId": "PF-001",
+  "lots": [
+    { "brokerRef": "BRK-2022-110010", "isin": "IE00B4L5Y983", "purchaseDate": "2022-11-10", "purchasePrice": 61.2, "quantity": 2000, "availableQuantity": 2000, "currency": "EUR" },
+    { "brokerRef": "BRK-2023-061501", "isin": "IE00B4L5Y983", "purchaseDate": "2023-06-15", "purchasePrice": 74.85, "quantity": 3000, "availableQuantity": 3000, "currency": "EUR" },
+    { "brokerRef": "BRK-2024-042001", "isin": "IE00B4L5Y983", "purchaseDate": "2024-04-20", "purchasePrice": 88.3, "quantity": 2000, "availableQuantity": 2000, "currency": "EUR" },
+    { "brokerRef": "BRK-2025-013001", "isin": "IE00B4L5Y983", "purchaseDate": "2025-01-30", "purchasePrice": 91.5, "quantity": 1200, "availableQuantity": 1200, "currency": "EUR" },
+    { "brokerRef": "BRK-2021-030501", "isin": "IE00B3XXRP09", "purchaseDate": "2021-03-05", "purchasePrice": 55.4, "quantity": 1500, "availableQuantity": 1000, "currency": "EUR" },
+    { "brokerRef": "BRK-2022-081801", "isin": "IE00B3XXRP09", "purchaseDate": "2022-08-18", "purchasePrice": 62.7, "quantity": 800, "availableQuantity": 800, "currency": "EUR" },
+    { "brokerRef": "BRK-2024-112001", "isin": "IE00B3XXRP09", "purchaseDate": "2024-11-20", "purchasePrice": 78.3, "quantity": 1000, "availableQuantity": 1000, "currency": "EUR" },
+    { "brokerRef": "BRK-2023-060101", "isin": "IE00B4WXJJ64", "purchaseDate": "2023-06-01", "purchasePrice": 105.6, "quantity": 1000, "availableQuantity": 1000, "currency": "EUR" },
+    { "brokerRef": "BRK-2024-021401", "isin": "IE00B4WXJJ64", "purchaseDate": "2024-02-14", "purchasePrice": 109.2, "quantity": 900, "availableQuantity": 900, "currency": "EUR" },
+    { "brokerRef": "BRK-2025-071401", "isin": "IE00B4WXJJ64", "purchaseDate": "2025-07-14", "purchasePrice": 112.8, "quantity": 900, "availableQuantity": 900, "currency": "EUR" },
+    { "brokerRef": "BRK-2020-051001", "isin": "IE00B579F325", "purchaseDate": "2020-05-10", "purchasePrice": 140.2, "quantity": 500, "availableQuantity": 300, "currency": "EUR" },
+    { "brokerRef": "BRK-2022-012001", "isin": "IE00B579F325", "purchaseDate": "2022-01-20", "purchasePrice": 168.75, "quantity": 300, "availableQuantity": 300, "currency": "EUR" },
+    { "brokerRef": "BRK-2023-110801", "isin": "IE00B579F325", "purchaseDate": "2023-11-08", "purchasePrice": 195.3, "quantity": 150, "availableQuantity": 150, "currency": "EUR" },
+    { "brokerRef": "BRK-2024-031501", "isin": "LU0323578657", "purchaseDate": "2024-03-15", "purchasePrice": 29.8, "quantity": 900, "availableQuantity": 900, "currency": "EUR" },
+    { "brokerRef": "BRK-2024-092201", "isin": "LU0323578657", "purchaseDate": "2024-09-22", "purchasePrice": 32.4, "quantity": 600, "availableQuantity": 600, "currency": "EUR" },
+    { "brokerRef": "BRK-2026-091201", "isin": "IE00B3F81R35", "purchaseDate": "2026-09-12", "purchasePrice": 9.85, "quantity": 3100, "availableQuantity": 3100, "currency": "EUR" }
+  ]
+}

@@ -37,6 +37,10 @@ wealth:
   ledger:
     # Foto exportada por OpenJEV (temporal). Ruta relativa al directorio de trabajo (backend-core-java/).
     mock-file: ../bank-simulator-mocks/api-json-responses/client_portfolio_jev.json
+  tax-lots:
+    # Lotes fiscales del modulo 2 (mock del broker). Se cargan al arrancar si el repositorio esta vacio.
+    enabled: true
+    mock-file: ../bank-simulator-mocks/api-json-responses/historical_lots.json
   baskets:
     # Agrupaciones de fondos (cestas / model portfolios) por cartera. Los pesos son RELATIVOS y se normalizan a
     # suma 1 (1,1,1 = tres fondos al 33,3 %). Solo fondos de la cartera; el efectivo no puede ir en una cesta.

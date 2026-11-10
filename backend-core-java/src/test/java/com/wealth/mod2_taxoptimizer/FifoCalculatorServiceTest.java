@@ -340,14 +340,14 @@ class FifoCalculatorServiceTest {
         }
 
         @Test
-        @DisplayName("Tramo 4: 300.000 € → 1.140 + 9.240 + 34.500 + 28.000 = 72.880 €")
+        @DisplayName("Tramo 4: 300.000 € → 1.140 + 9.240 + 34.500 + 27.000 = 71.880 €")
         void tramo4() {
             // T1:   6.000 × 19% =  1.140
             // T2:  44.000 × 21% =  9.240
             // T3: 150.000 × 23% = 34.500
-            // T4: 100.000 × 28% = 28.000
+            // T4: 100.000 × 27% = 27.000 (el 30% empieza a partir de 300.000)
             assertThat(fifo.computeIrpfTax(new BigDecimal("300000")))
-                    .isEqualByComparingTo("72880.00");
+                    .isEqualByComparingTo("71880.00");
         }
 
         @Test
