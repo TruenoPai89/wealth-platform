@@ -1,0 +1,19 @@
+CONTRATO DE PRESTAMO CON GARANTIA PIGNORATICIA DE VALORES (MOCK SINTETICO)
+Clausula 1. Objeto. El Banco concede al Cliente una linea de credito de hasta
+80.000 euros con garantia pignoraticia sobre los valores depositados en su
+cuenta de custodia.
+Clausula 2. Valor de Garantia. Es el valor de mercado de los activos
+pignorados tras aplicar los descuentos de la clausula 3.
+Clausula 3. Descuentos.
+a) Renta variable (acciones y ETF de renta variable): aforo del 70 %.
+b) Renta fija (bonos y ETF de deuda publica de la zona euro): descuento del
+10 %.
+c) Materias primas (ETC de oro fisico): descuento del 25 %.
+d) Efectivo en cuenta: computa por su valor integro.
+e) Productos estructurados y criptoactivos: no admitidos como garantia.
+Clausula 4. Limite. El saldo dispuesto no podra superar el 70 % del
+Valor de Garantia.
+Clausula 5. Margen. Si el saldo dispuesto alcanza el 80 % del Valor de
+Garantia, el Banco notificara al Cliente, que dispondra de 5 dias habiles
+para amortizar o aportar garantias adicionales. Transcurrido el plazo, el
+Banco podra vender activos pignorados.

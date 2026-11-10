@@ -1,0 +1,11 @@
+{
+    "ltv_maximo": 0.70,
+    "ltv_margin_call": 0.80,
+    "plazo_reposicion_dias_habiles": 5,
+    "haircuts": {
+        "EQUITY": 0.30,
+        "FIXED_INCOME": 0.10,
+        "COMMODITY": 0.25,
+        "CASH": 0.0
+    }
+}
