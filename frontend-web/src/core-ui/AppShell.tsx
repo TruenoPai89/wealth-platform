@@ -187,7 +187,7 @@ const ICON_BUTTON = [
 
 function Topbar({ clientName, sidebarCollapsed, onToggleSidebar, mobileNavOpen, onToggleMobileNav }: TopbarProps) {
   return (
-    <header className="h-14 bg-surface-raised border-b border-surface-border flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0 z-20">
+    <header className="h-14 bg-white/50 dark:bg-slate-950/50 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0 z-20">
       {/* Menú hamburguesa: solo smartphones y tablets pequeñas (abre el drawer) */}
       <button
         type="button"
@@ -222,7 +222,10 @@ function Topbar({ clientName, sidebarCollapsed, onToggleSidebar, mobileNavOpen, 
 
       {/* Cliente activo */}
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        <div className="w-2 h-2 rounded-full bg-semantic-gain shrink-0" aria-hidden="true" />
+        <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+        </span>
         <span className="text-gray-400 text-xs hidden sm:block">Cliente activo:</span>
         <span className="text-fg text-sm font-medium truncate">{clientName}</span>
       </div>
@@ -259,11 +262,11 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
   const isDisabled = !item.href;
 
   const className = [
-    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+    "relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium",
     "transition-colors duration-150",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
     isActive
-      ? "bg-brand-600 text-white hover:bg-brand-500"
+      ? "bg-brand-600 text-white shadow-sm shadow-brand-950/20 hover:bg-brand-500 before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-white"
       : isDisabled
         ? "text-gray-600 cursor-not-allowed opacity-50"
         : "text-gray-400 hover:text-fg hover:bg-surface-overlay active:bg-surface-overlay/70",

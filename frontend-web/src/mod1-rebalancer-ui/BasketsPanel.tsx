@@ -19,6 +19,7 @@ interface BasketsPanelProps {
   /** instrumentId → nombre del fondo (de la cartera). */
   nameOf: Record<string, string>;
   onInvest: (basket: Basket) => void;
+  onCreate: () => void;
   disabled?: boolean;
 }
 
@@ -34,20 +35,20 @@ function summary(basket: Basket): string {
     : `${n} ${noun} con distribución personalizada`;
 }
 
-export function BasketsPanel({ baskets, nameOf, onInvest, disabled = false }: BasketsPanelProps) {
-  if (baskets.length === 0) return null;
-
+export function BasketsPanel({ baskets, nameOf, onInvest, onCreate, disabled = false }: BasketsPanelProps) {
   return (
     <section aria-label="Agrupaciones de fondos" className="flex flex-col gap-3" data-testid="baskets-panel">
-      <div>
-        <h2 className="text-lg font-semibold text-fg">Agrupaciones</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Cestas de fondos con pesos predefinidos. Invierte una aportación y se reparte solo comprando, acercando la
-          cartera a sus pesos objetivo sin vender nada.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-fg">Agrupaciones</h2>
+          <p className="mt-0.5 text-sm text-gray-500">Estrategias de fondos para invertir una cantidad o rebalancear tu exposición.</p>
+        </div>
+        <button type="button" onClick={onCreate} disabled={disabled} className="rounded-lg border border-brand-500/60 px-3 py-2 text-sm font-medium text-brand-300 hover:bg-brand-500/10 disabled:opacity-50">
+          + Crear agrupación
+        </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {baskets.length > 0 && <div className="grid gap-4 md:grid-cols-2">
         {baskets.map((basket) => (
           <article
             key={basket.id}
@@ -68,7 +69,7 @@ export function BasketsPanel({ baskets, nameOf, onInvest, disabled = false }: Ba
                 data-testid={`invest-${basket.id}`}
                 className="shrink-0 px-3 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
-                Invertir en Agrupación
+                Invertir / rebalancear
               </button>
             </div>
 
@@ -92,7 +93,7 @@ export function BasketsPanel({ baskets, nameOf, onInvest, disabled = false }: Ba
             </ul>
           </article>
         ))}
-      </div>
+      </div>}
     </section>
   );
 }

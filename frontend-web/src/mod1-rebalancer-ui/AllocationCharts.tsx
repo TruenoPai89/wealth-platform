@@ -13,7 +13,7 @@
  * @module mod1-rebalancer-ui/AllocationCharts
  */
 
-import React from "react";
+import React, { useState } from "react";
 import type { AssetClass } from "@/core-ui/types/portfolio";
 import { formatWeight } from "@/core-ui/format";
 
@@ -70,8 +70,10 @@ function Donut({ rings, centerTop, centerBottom, ariaLabel }: {
   centerBottom: string;
   ariaLabel: string;
 }) {
+  const [hovered, setHovered] = useState<{ label: string; value: number; ring: string } | null>(null);
   return (
-    <svg viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`} className="w-48 h-48 shrink-0" role="img" aria-label={ariaLabel}>
+    <div className="relative w-48 h-48 shrink-0">
+    <svg viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`} className="w-48 h-48" role="img" aria-label={ariaLabel}>
       {rings.map((ring) => {
         const total = ring.slices.reduce((s, x) => s + Math.max(x.value, 0), 0);
         let offset = 0;
@@ -96,6 +98,9 @@ function Donut({ rings, centerTop, centerBottom, ariaLabel }: {
                       pathLength={100}
                       strokeDasharray={`${pct} ${100 - pct}`}
                       strokeDashoffset={-offset}
+                      className="cursor-help transition-opacity hover:opacity-75"
+                      onMouseEnter={() => setHovered({ label: s.label, value: s.value, ring: ring.label.includes("objetivo") ? "Objetivo" : "Actual" })}
+                      onMouseLeave={() => setHovered(null)}
                     >
                       <title>{`${s.label}: ${formatWeight(s.value)}`}</title>
                     </circle>
@@ -113,6 +118,14 @@ function Donut({ rings, centerTop, centerBottom, ariaLabel }: {
         {centerBottom}
       </text>
     </svg>
+    {hovered && (
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 w-36 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-surface-border bg-surface-raised/95 px-3 py-2 text-center shadow-xl backdrop-blur" role="status">
+        <p className="truncate text-xs font-semibold text-fg">{hovered.label}</p>
+        <p className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-gray-500">{hovered.ring}</p>
+        <p className="mt-1 font-mono text-sm text-brand-300">{formatWeight(hovered.value)}</p>
+      </div>
+    )}
+    </div>
   );
 }
 
@@ -136,7 +149,7 @@ function Legend({ rows }: { rows: { key: string; label: string; color: string; c
               <td className="py-1 pr-2 w-full max-w-0">
                 <span className="inline-flex items-center gap-2 min-w-0 max-w-full">
                   <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: r.color }} aria-hidden="true" />
-                  <span className="text-fg truncate" title={r.label}>{r.label}</span>
+                  <span className="text-fg truncate" title={`${r.label}: actual ${formatWeight(r.current)}, objetivo ${formatWeight(r.target)}`}>{r.label}</span>
                 </span>
               </td>
               <td className="py-1 pl-3 text-right font-mono text-fg whitespace-nowrap">{formatWeight(r.current)}</td>

@@ -40,7 +40,9 @@ import {
   type PortfolioViewMode,
 } from "@/core-ui/services/rebalancePlanAdapter";
 import { AllocationCharts } from "@/mod1-rebalancer-ui/AllocationCharts";
+import { PerformanceChart } from "@/mod1-rebalancer-ui/PerformanceChart";
 import { BasketsPanel } from "@/mod1-rebalancer-ui/BasketsPanel";
+import { CreateBasketModal } from "@/mod1-rebalancer-ui/CreateBasketModal";
 import { ContributionModal } from "@/mod1-rebalancer-ui/ContributionModal";
 import { OrderPreviewModal } from "@/mod1-rebalancer-ui/OrderPreviewModal";
 import { PortfolioViewToggle } from "@/mod1-rebalancer-ui/PortfolioViewToggle";
@@ -114,6 +116,7 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
   // Agrupaciones (cestas) y aportación de efectivo («Invertir en Agrupación»)
   const [baskets, setBaskets] = useState<Basket[]>([]);
   const [investing, setInvesting] = useState<Basket | null>(null);
+  const [creatingBasket, setCreatingBasket] = useState(false);
   const [lastContribution, setLastContribution] = useState<ContributionExecution | null>(null);
 
   // Las cestas no cambian al operar (solo su peso real), así que se cargan una vez. Sin backend (mock) no hay.
@@ -191,6 +194,11 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
     await refetch();
   }
 
+  function handleCreateBasket(basket: Basket) {
+    setBaskets((current) => [...current, basket]);
+    setCreatingBasket(false);
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
       {/* Barra de acciones */}
@@ -201,16 +209,19 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Origen de datos: backend real (por defecto) o mock (NEXT_PUBLIC_USE_MOCK=true) */}
-          <span className="inline-flex items-center gap-1.5 text-xs bg-brand-950 border border-brand-800 text-brand-300 px-3 py-1.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" aria-hidden="true" />
-            {USE_MOCK ? "Datos simulados (mock)" : "Backend en vivo"}
+          <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/70 px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-300">
+          <span className="relative flex h-2 w-2" aria-hidden="true">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+          </span>
+          {USE_MOCK ? "Datos simulados (mock)" : "Backend en vivo"}
           </span>
           {plan && !USE_MOCK && (
             <button
               type="button"
               onClick={() => setEditingTargets((v) => !v)}
               disabled={isLoading}
-              className={`${BUTTON_BASE} btn-secondary`}
+              className={`${BUTTON_BASE} btn-secondary border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800`}
             >
               Editar meta
             </button>
@@ -219,7 +230,7 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
             type="button"
             onClick={() => void handleRebalance()}
             disabled={isLoading}
-            className={`${BUTTON_BASE} btn-primary`}
+            className={`${BUTTON_BASE} btn-primary rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-all hover:bg-blue-700 active:scale-[0.98]`}
           >
             <RefreshIcon spinning={isLoading} />
             {isLoading ? "Cargando..." : USE_MOCK ? "Actualizar" : "Rebalancear"}
@@ -325,6 +336,19 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
 
       {/* Distribución de la cartera: sigue la vista de la tabla (actual o proyectada) */}
       {displayPlan && !isLoading && !error && (
+        <PerformanceChart
+          performance={
+            displayPlan.performance ?? {
+              totalValue: displayPlan.totalValue,
+              totalCost: displayPlan.totalValue,
+              unrealizedPnLAmount: 0,
+              unrealizedPnLPercent: 0,
+            }
+          }
+        />
+      )}
+
+      {displayPlan && !isLoading && !error && (
         <AllocationCharts
           positions={displayPlan.positions}
           viewLabel={viewMode === "projected" ? "Cartera proyectada" : "Cartera actual"}
@@ -332,11 +356,12 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
       )}
 
       {/* Agrupaciones de fondos: «Invertir en Agrupación» (aportación de efectivo) */}
-      {plan && !USE_MOCK && !error && baskets.length > 0 && (
+      {plan && !USE_MOCK && !error && (
         <BasketsPanel
           baskets={baskets}
           nameOf={Object.fromEntries(plan.positions.map((p) => [p.instrumentId, p.name]))}
           onInvest={setInvesting}
+          onCreate={() => setCreatingBasket(true)}
           disabled={isLoading}
         />
       )}
@@ -347,6 +372,14 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
           basket={investing}
           onClose={() => setInvesting(null)}
           onExecuted={(execution) => void handleContributionExecuted(execution)}
+        />
+      )}
+
+      {creatingBasket && plan && (
+        <CreateBasketModal
+          positions={plan.positions}
+          onClose={() => setCreatingBasket(false)}
+          onCreate={handleCreateBasket}
         />
       )}
     </div>

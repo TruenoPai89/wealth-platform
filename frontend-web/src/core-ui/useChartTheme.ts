@@ -30,7 +30,14 @@ const FALLBACK: ChartTheme = {
   danger: "#f87171",
   axis: "#94a3b8",
   grid: "#334155",
-  tooltip: {},
+  tooltip: {
+    background: "rgb(15 23 42 / 0.94)",
+    border: "1px solid rgb(51 65 85)",
+    color: "#f1f5f9",
+    borderRadius: 10,
+    fontSize: 12,
+    boxShadow: "0 8px 24px rgb(0 0 0 / 0.25)",
+  },
 };
 
 function read(): ChartTheme {
@@ -47,7 +54,7 @@ function read(): ChartTheme {
     axis: rgb("--chart-axis", FALLBACK.axis),
     grid: rgb("--chart-grid", FALLBACK.grid),
     tooltip: {
-      background: `rgb(${css.getPropertyValue("--bg-card").trim() || "15 23 42"} / 0.82)`,
+      background: `rgb(${css.getPropertyValue("--bg-card").trim() || "15 23 42"} / 0.94)`,
       border: `1px solid rgb(${css.getPropertyValue("--border-subtle").trim() || "51 65 85"})`,
       color: `rgb(${css.getPropertyValue("--text-main").trim() || "241 245 249"})`,
       borderRadius: 10,

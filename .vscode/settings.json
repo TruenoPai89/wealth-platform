@@ -2,5 +2,6 @@
     "cmake.sourceDirectory": "/home/trueno/Documentos/Proyectos/wealth-platform/quant-engine-cpp",
     "files.watcherExclude": {
         "**/target/**": true
-    }
+    },
+    "java.compile.nullAnalysis.mode": "automatic"
 }

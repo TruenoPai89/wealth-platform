@@ -140,19 +140,14 @@ export function TaxModuleBootstrap({
       {plan && sellPositions.length > 0 && (
         <button
           onClick={() => setDrawerOpen(true)}
-          className={[
-            "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg",
-            "text-xs font-medium border transition-colors",
-            "border-accent/40 text-accent bg-accent/10",
-            "hover:bg-accent/20 hover:border-accent/60 active:bg-accent/30",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-          ].join(" ")}
+          className="group flex w-full items-center justify-between gap-3 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-transparent p-3 text-left transition-all hover:border-blue-200 hover:shadow-sm dark:border-blue-900/40 dark:from-slate-900 dark:via-blue-950/30 dark:to-transparent dark:hover:border-blue-800"
           aria-label="Ver análisis fiscal del rebalanceo"
         >
-          {/* Icono documento fiscal */}
+          <span className="flex items-center gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-white/80 text-blue-600 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300">
           <svg
-            width="13"
-            height="13"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -166,7 +161,13 @@ export function TaxModuleBootstrap({
             <line x1="16" y1="13" x2="8" y2="13" />
             <line x1="16" y1="17" x2="8" y2="17" />
           </svg>
-          Análisis Fiscal
+          </span>
+          <span>
+            <span className="block text-xs font-semibold uppercase tracking-wider text-blue-900 dark:text-blue-200">Análisis Fiscal</span>
+            <span className="mt-0.5 block text-xs text-slate-600 dark:text-slate-400">Revisa el impacto de las ventas antes de ejecutar</span>
+          </span>
+          </span>
+          <span className="shrink-0 text-xs font-semibold text-blue-700 transition-transform group-hover:translate-x-0.5 dark:text-blue-300">Ver análisis →</span>
           {/* Dot de alerta si hay violaciones de la regla 2 meses */}
           {sellPositions.some(
             (p) =>
