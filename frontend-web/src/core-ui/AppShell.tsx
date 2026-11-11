@@ -139,6 +139,7 @@ const NAV_ITEMS: NavItem[] = [
     label: "Declaración IRPF",
     icon: <IconIrpf />,
     modulePhase: 3,
+    href: "/irpf",
   },
   {
     id: "pledge",
