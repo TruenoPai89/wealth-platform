@@ -145,6 +145,7 @@ const NAV_ITEMS: NavItem[] = [
     label: "Pignoración / LTV",
     icon: <IconPledge />,
     modulePhase: 4,
+    href: "/pignoracion"
   },
 ];
 

@@ -77,3 +77,7 @@ logs/
 # Artefactos locales de editor (extensiones de VS Code / Metals): no versionar
 .history/
 .metals/
+
+
+.cache_extracciones/
+
