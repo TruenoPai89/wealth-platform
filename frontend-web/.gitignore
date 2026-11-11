@@ -9,13 +9,18 @@ node_modules/
 tsconfig.tsbuildinfo
 
 # ─── Variables de entorno locales ────────────────────────────────────────────
-# .env.local contiene claves de API y la URL del backend — nunca al repo
+# .env.local contiene claves de API y la URL del backend — nunca al repo.
+# .env.example SÍ se incluye en el repo como plantilla (sin valores reales).
 .env.local
 .env.*.local
 
-# ─── Vercel (si se despliega ahí en el futuro) ────────────────────────────────
+# ─── Vercel ───────────────────────────────────────────────────────────────────
 .vercel/
 
 # ─── Misc ────────────────────────────────────────────────────────────────────
 *.log
 .DS_Store
+
+# ─── Mock data: NO ignorar — el JSON está dentro de src/ y se necesita
+# para el modo NEXT_PUBLIC_USE_MOCK=true sin backend.
+# src/core-ui/mocks/ → commiteado intencionalmente.

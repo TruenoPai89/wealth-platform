@@ -1,0 +1,231 @@
+{
+  "schemaVersion": "1.0",
+  "module": "MOD1_REBALANCER",
+  "portfolioId": "PF-001",
+  "clientId": "CLI-00089",
+  "baseCurrency": "EUR",
+  "asOf": "2026-11-08T09:00:00Z",
+  "totalValue": 1250430.75,
+  "constraints": {
+    "taxFrictionApplied": false,
+    "lockedQuantities": {
+      "IE00B4L5Y983": 5000
+    }
+  },
+  "positions": [
+    {
+      "instrumentId": "LU0323578657",
+      "isin": "LU0323578657",
+      "name": "Xtrackers MSCI World Minimum Volatility ETF",
+      "assetClass": "EQUITY",
+      "quantity": 1500.0,
+      "price": 34.12,
+      "marketValue": 51180.0,
+      "currentWeight": 0.040929,
+      "targetWeight": 0.05,
+      "deltaWeight": 0.009071,
+      "targetValue": 62521.54,
+      "deltaValue": 11341.54,
+      "order": {
+        "instrumentId": "LU0323578657",
+        "name": "Xtrackers MSCI World Minimum Volatility ETF",
+        "side": "BUY",
+        "quantity": 332.431,
+        "price": 34.12,
+        "amount": 11341.54,
+        "currency": "EUR"
+      },
+      "postTradeQuantity": 1832.431,
+      "postTradeValue": 62521.54,
+      "postTradeWeight": 0.05,
+      "ticker": "MVOL",
+      "subClass": "ETF_GLOBAL",
+      "currency": "EUR",
+      "avgCostPrice": 28.45,
+      "pnl": { "unrealized": 8505.0, "unrealizedPct": 19.93 },
+      "flags": { "isPledged": false, "taxWarning2Month": false, "hasOpenTaxLots": true },
+      "pledgeInfo": null,
+      "taxLotsSummary": {
+        "lotCount": 2,
+        "oldestAcquisitionDate": "2024-03-15",
+        "newestAcquisitionDate": "2024-09-22"
+      }
+    },
+    {
+      "instrumentId": "IE00B4L5Y983",
+      "isin": "IE00B4L5Y983",
+      "name": "iShares Core MSCI World UCITS ETF",
+      "assetClass": "EQUITY",
+      "quantity": 8200.0,
+      "price": 97.65,
+      "marketValue": 800730.0,
+      "currentWeight": 0.640358,
+      "targetWeight": 0.60,
+      "deltaWeight": -0.040358,
+      "targetValue": 750258.45,
+      "deltaValue": -50471.55,
+      "order": {
+        "instrumentId": "IE00B4L5Y983",
+        "name": "iShares Core MSCI World UCITS ETF",
+        "side": "SELL",
+        "quantity": 516.886,
+        "price": 97.65,
+        "amount": 50471.55,
+        "currency": "EUR"
+      },
+      "postTradeQuantity": 7683.114,
+      "postTradeValue": 750258.45,
+      "postTradeWeight": 0.60,
+      "ticker": "SWDA",
+      "subClass": "ETF_GLOBAL",
+      "currency": "USD",
+      "avgCostPrice": 82.30,
+      "pnl": { "unrealized": 125870.0, "unrealizedPct": 18.65 },
+      "flags": { "isPledged": true, "taxWarning2Month": false, "hasOpenTaxLots": true },
+      "pledgeInfo": {
+        "pledgeContractId": "PGN-2025-0033",
+        "pledgedQuantity": 5000,
+        "loanId": "LBD-2025-0019",
+        "ltvRatio": 0.58,
+        "ltvThresholdWarning": 0.65,
+        "ltvThresholdLiquidation": 0.75
+      },
+      "taxLotsSummary": {
+        "lotCount": 4,
+        "oldestAcquisitionDate": "2022-11-10",
+        "newestAcquisitionDate": "2025-01-30"
+      }
+    },
+    {
+      "instrumentId": "IE00B3F81R35",
+      "isin": "IE00B3F81R35",
+      "name": "iShares Core UK Gilts UCITS ETF",
+      "assetClass": "FIXED_INCOME",
+      "quantity": 3100.0,
+      "price": 10.22,
+      "marketValue": 31682.0,
+      "currentWeight": 0.025337,
+      "targetWeight": 0.05,
+      "deltaWeight": 0.024663,
+      "targetValue": 62521.54,
+      "deltaValue": 30839.54,
+      "order": {
+        "instrumentId": "IE00B3F81R35",
+        "name": "iShares Core UK Gilts UCITS ETF",
+        "side": "BUY",
+        "quantity": 3017.568,
+        "price": 10.22,
+        "amount": 30839.54,
+        "currency": "EUR"
+      },
+      "postTradeQuantity": 6117.568,
+      "postTradeValue": 62521.54,
+      "postTradeWeight": 0.05,
+      "ticker": "IGLT",
+      "subClass": "GOVERNMENT_BONDS",
+      "currency": "GBP",
+      "avgCostPrice": 9.85,
+      "pnl": { "unrealized": 1147.0, "unrealizedPct": 3.76 },
+      "flags": { "isPledged": false, "taxWarning2Month": true, "hasOpenTaxLots": true },
+      "pledgeInfo": null,
+      "taxLotsSummary": {
+        "lotCount": 1,
+        "oldestAcquisitionDate": "2026-09-12",
+        "newestAcquisitionDate": "2026-09-12"
+      }
+    },
+    {
+      "instrumentId": "IE00B4WXJJ64",
+      "isin": "IE00B4WXJJ64",
+      "name": "iShares Core Euro Govt Bond UCITS ETF",
+      "assetClass": "FIXED_INCOME",
+      "quantity": 2800.0,
+      "price": 111.35,
+      "marketValue": 311780.0,
+      "currentWeight": 0.249336,
+      "targetWeight": 0.25,
+      "deltaWeight": 0.000664,
+      "targetValue": 312607.69,
+      "deltaValue": 827.69,
+      "order": null,
+      "postTradeQuantity": 2800.0,
+      "postTradeValue": 311780.0,
+      "postTradeWeight": 0.249336,
+      "ticker": "IEGA",
+      "subClass": "GOVERNMENT_BONDS",
+      "currency": "EUR",
+      "avgCostPrice": 108.90,
+      "pnl": { "unrealized": 6860.0, "unrealizedPct": 2.25 },
+      "flags": { "isPledged": false, "taxWarning2Month": false, "hasOpenTaxLots": true },
+      "pledgeInfo": null,
+      "taxLotsSummary": {
+        "lotCount": 3,
+        "oldestAcquisitionDate": "2023-06-01",
+        "newestAcquisitionDate": "2025-07-14"
+      }
+    },
+    {
+      "instrumentId": "CASH:EUR",
+      "isin": null,
+      "name": "Cash EUR",
+      "assetClass": "CASH",
+      "quantity": 55058.75,
+      "price": 1.0,
+      "marketValue": 55058.75,
+      "currentWeight": 0.044031,
+      "targetWeight": 0.05,
+      "deltaWeight": 0.005969,
+      "targetValue": 62521.54,
+      "deltaValue": 7462.79,
+      "order": null,
+      "postTradeQuantity": 55058.75,
+      "postTradeValue": 55058.75,
+      "postTradeWeight": 0.044031,
+      "ticker": "CASH",
+      "subClass": "CASH",
+      "currency": "EUR",
+      "avgCostPrice": 1.0,
+      "pnl": { "unrealized": 0.0, "unrealizedPct": 0.0 },
+      "flags": { "isPledged": false, "taxWarning2Month": false, "hasOpenTaxLots": false },
+      "pledgeInfo": null,
+      "taxLotsSummary": null
+    }
+  ],
+  "orders": [
+    {
+      "instrumentId": "IE00B4L5Y983",
+      "name": "iShares Core MSCI World UCITS ETF",
+      "side": "SELL",
+      "quantity": 516.886,
+      "price": 97.65,
+      "amount": 50471.55,
+      "currency": "EUR"
+    },
+    {
+      "instrumentId": "LU0323578657",
+      "name": "Xtrackers MSCI World Minimum Volatility ETF",
+      "side": "BUY",
+      "quantity": 332.431,
+      "price": 34.12,
+      "amount": 11341.54,
+      "currency": "EUR"
+    },
+    {
+      "instrumentId": "IE00B3F81R35",
+      "name": "iShares Core UK Gilts UCITS ETF",
+      "side": "BUY",
+      "quantity": 3017.568,
+      "price": 10.22,
+      "amount": 30839.54,
+      "currency": "EUR"
+    }
+  ],
+  "cashFlow": {
+    "cashBefore": 55058.75,
+    "buyTotal": 42181.08,
+    "sellTotal": 50471.55,
+    "netCashFlow": 8290.47,
+    "cashAfter": 63349.22,
+    "targetCash": 62521.54
+  }
+}
