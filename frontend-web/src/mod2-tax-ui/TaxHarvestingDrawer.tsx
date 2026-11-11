@@ -225,7 +225,7 @@ export function TaxHarvestingDrawer({
       {/* Drawer */}
       <aside
         className={[
-          "fixed right-0 top-0 h-full z-50",
+          "fixed right-0 top-0 h-full max-h-dvh z-50",
           "w-full max-w-md",
           "bg-surface-raised border-l border-surface-border",
           "flex flex-col shadow-2xl",

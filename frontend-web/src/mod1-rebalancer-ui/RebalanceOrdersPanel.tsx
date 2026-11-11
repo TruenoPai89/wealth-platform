@@ -52,8 +52,8 @@ export function RebalanceOrdersPanel({ plan }: { plan: RebalancePlan }) {
       </div>
 
       {orders.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" aria-label="Tabla de órdenes de rebalanceo">
+        <div className="table-scroll" tabIndex={0} role="region" aria-label="Órdenes de rebalanceo (desplazable horizontalmente)">
+          <table className="w-full min-w-[32rem] text-sm" aria-label="Tabla de órdenes de rebalanceo">
             <thead>
               <tr className="border-y border-surface-border bg-surface-overlay/50">
                 {["Operación", "Fondo", "Participaciones", "Precio", "Importe"].map((h, i) => (

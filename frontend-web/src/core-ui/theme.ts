@@ -23,6 +23,9 @@ export function currentTheme(): Theme {
 /** Aplica y guarda el tema. */
 export function applyTheme(theme: Theme): void {
   const classes = document.documentElement.classList;
+  // La transición suave de colores solo existe mientras se cambia de tema (ver globals.css): así no anima los hover.
+  classes.add("theme-transition");
+  window.setTimeout(() => classes.remove("theme-transition"), 250);
   classes.remove("dark", "light");
   classes.add(theme);
   try {

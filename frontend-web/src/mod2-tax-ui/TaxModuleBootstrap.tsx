@@ -147,9 +147,9 @@ export function TaxModuleBootstrap({
           className={[
             "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg",
             "text-xs font-medium border transition-colors",
-            "border-brand-500/40 text-brand-400 bg-brand-500/10",
-            "hover:bg-brand-500/20 hover:border-brand-500/60",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
+            "border-accent/40 text-accent bg-accent/10",
+            "hover:bg-accent/20 hover:border-accent/60 active:bg-accent/30",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
           ].join(" ")}
           aria-label="Ver análisis fiscal del rebalanceo"
         >

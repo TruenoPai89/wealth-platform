@@ -110,7 +110,7 @@ ElevenLabs no puede llamar a `localhost`: el backend necesita una URL pública H
 
 ## 6. Cómo probarlo sin gastar nada
 
-- **Tests automáticos:** `cd backend-core-java && mvn test` → 234 tests, 28 de telefonía (`mod5_telephony`). Usan un
+- **Tests automáticos:** `cd backend-core-java && mvn test` → 301 tests, entre ellos los de telefonía y voz (`mod5_telephony`). Usan un
   servidor HTTP local que hace de ElevenLabs falso.
 - **UI con ElevenLabs falso:** se probó el recorrido Marcando → En llamada → Finalizada arrancando el backend con
   `--wealth.telephony.elevenlabs.base-url=http://127.0.0.1:<puerto>` apuntando a un servidor de mentira que no llama a

@@ -47,12 +47,12 @@ export function OrderPreviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="order-preview-title"
     >
-      <div className="bg-surface-raised border border-surface-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface-raised border border-surface-border rounded-t-2xl sm:rounded-xl w-full max-w-2xl max-h-[90vh] max-h-[90dvh] overflow-y-auto overscroll-contain">
         <div className="px-5 pt-5 pb-3">
           <h2 id="order-preview-title" className="text-lg font-semibold text-fg">
             Confirmar rebalanceo

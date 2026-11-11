@@ -56,6 +56,10 @@ wealth:
   ledger:
     # Foto exportada por OpenJEV (temporal). Ruta relativa al directorio de trabajo (backend-core-java/).
     mock-file: ../bank-simulator-mocks/api-json-responses/client_portfolio_jev.json
+  margin:
+    # Volatilidad anual y correlaciones por fondo (modulo 4, analisis de margin call). SUPUESTOS ilustrativos, no series
+    # historicas. Si el fichero falta, el backend arranca igual y usa volatilidades por clase de activo (se avisa en el analisis).
+    risk-profile-file: ../bank-simulator-mocks/api-json-responses/fund_risk_profile.json
   tax-lots:
     # Lotes fiscales del modulo 2 (mock del broker). Se cargan al arrancar si el repositorio esta vacio.
     enabled: true
