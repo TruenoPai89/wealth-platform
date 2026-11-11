@@ -72,6 +72,8 @@ export function TaxModuleBootstrap({
   // ── 2. Estado del drawer ───────────────────────────────────────────────────
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [taxLoading, setTaxLoading] = useState(false);
+  // Posiciones con taxSummary: son las que lee el drawer (el plan crudo no trae datos fiscales).
+  const [enriched, setEnriched] = useState<AssetPosition[] | null>(null);
 
   // ── 3. Cargar datos fiscales cuando el plan cambia ─────────────────────────
   // Usamos una ref para evitar dobles llamadas en StrictMode de React
@@ -79,8 +81,12 @@ export function TaxModuleBootstrap({
 
   const enrichPositions = useCallback(
     async (currentPlan: RebalancePlan) => {
-      // Clave única del plan para evitar re-fetches con el mismo plan
-      const planKey = `${portfolioId}-${currentPlan.asOf}`;
+      // Clave única del plan para evitar re-fetches con el mismo plan. `asOf` no cambia al editar la meta,
+      // así que se incluyen las órdenes: si cambian, hay que recalcular los datos fiscales.
+      const ordersKey = currentPlan.orders
+        .map((o) => `${o.instrumentId}:${o.side}:${o.quantity}`)
+        .join("|");
+      const planKey = `${portfolioId}-${currentPlan.asOf}-${ordersKey}`;
       if (lastPlanRef.current === planKey) return;
       lastPlanRef.current = planKey;
 
@@ -107,9 +113,11 @@ export function TaxModuleBootstrap({
           };
         });
 
+        setEnriched(enriched);
         onPositionsEnriched(enriched);
       } catch {
         // Fallo silencioso: el Módulo 2 no bloquea al Módulo 1
+        setEnriched(currentPlan.positions as AssetPosition[]);
         onPositionsEnriched(currentPlan.positions as AssetPosition[]);
       } finally {
         setTaxLoading(false);
@@ -123,9 +131,14 @@ export function TaxModuleBootstrap({
   }, [plan, enrichPositions]);
 
   // ── 4. Posiciones SELL con datos fiscales para el drawer ───────────────────
+  // Las órdenes salen del plan vigente; el taxSummary, de las posiciones enriquecidas (por instrumento).
+  const taxById = new Map((enriched ?? []).map((p) => [p.instrumentId, p.taxSummary]));
   const sellPositions: AssetPosition[] = (plan?.positions ?? [])
     .filter((p) => p.order?.side === "SELL")
-    .map((p) => p as AssetPosition);
+    .map((p) => ({
+      ...(p as AssetPosition),
+      taxSummary: taxById.get(p.instrumentId) ?? null,
+    }));
 
   // ── 5. Render: botón de acceso al Drawer + el Drawer en sí ────────────────
   return (
