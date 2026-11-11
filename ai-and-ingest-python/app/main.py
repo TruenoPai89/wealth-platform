@@ -19,6 +19,7 @@ from pydantic import BaseModel  # noqa: E402
 
 from app.advisor_llm.claude_engine import explicar_venta  # noqa: E402
 from app.advisor_llm.pledge_explainer import explicar_estado  # noqa: E402
+from app.advisor_llm.resumen_engine import explicar_resumen  # noqa: E402
 from app.advisor_llm.pledge_extractor import (  # noqa: E402
     ExtraccionFallida,
     extraer_terminos,
@@ -60,6 +61,14 @@ def explain_irpf_sale(datos: dict) -> dict:
     (backend Java) y lo explica.
     """
     return explicar_venta(datos)
+
+
+@app.post("/explain/irpf-annual")
+def explain_irpf_annual(datos: dict) -> dict:
+    """Recibe el JSON de POST /api/v1/irpf/{id}/annual-report
+    (backend Java) y lo explica.
+    """
+    return explicar_resumen(datos)
 
 
 # ----------------------------------------------------------------

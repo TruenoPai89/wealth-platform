@@ -56,3 +56,50 @@ export interface IrpfExplanation {
   fuente: "claude" | "plantilla";
   intentos: number;
 }
+
+// ─── Resumen fiscal del ejercicio (Modelo100ExportController / AnnualTaxReportService) ───
+
+export interface AnnualSale {
+  isin: string;
+  /** ISO 8601 (yyyy-mm-dd). Debe ser del ejercicio. */
+  saleDate: string;
+  quantity: number;
+  salePrice: number;
+}
+
+export interface AnnualReportRequest {
+  fiscalYear: number;
+  sales: AnnualSale[];
+  carryForward?: CarryForward[];
+}
+
+export interface AnnualOperation {
+  isin: string;
+  saleDate: string;
+  quantity: number;
+  quantityCovered: number;
+  salePrice: number;
+  transmissionValue: number;
+  acquisitionValue: number;
+  /** + ganancia, - pérdida */
+  gainLoss: number;
+  firstAcquisitionDate: string | null;
+  lastAcquisitionDate: string | null;
+  lotsUsed: number;
+  twoMonthRuleViolation: boolean;
+  /** Lo que entra en el ejercicio (0 si la pérdida se difiere). */
+  computableGainLoss: number;
+  warning: string | null;
+}
+
+export interface AnnualReport {
+  portfolioId: string;
+  fiscalYear: number;
+  operations: AnnualOperation[];
+  totalTransmissionValue: number;
+  totalAcquisitionValue: number;
+  totalGains: number;
+  totalLosses: number;
+  deferredLosses: number;
+  result: IrpfResult;
+}
