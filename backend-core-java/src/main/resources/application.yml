@@ -31,6 +31,25 @@ wealth:
     # Patrones de origen permitidos para /api/** (frontend Next.js en desarrollo). Lista separada por comas.
     # localhost y 127.0.0.1 en cualquier puerto: cubre http://127.0.0.1:3000 y Next en 3001 si el 3000 esta ocupado.
     allowed-origin-patterns: http://localhost:*,http://127.0.0.1:*
+  telephony:
+    # Llamada de voz con el asesor de IA (ElevenLabs Conversational AI + Twilio).
+    # SECRETOS: solo por variables de entorno, NUNCA escritos aqui ni en git. Sin ellas la app arranca igual y los
+    # endpoints de llamada responden 503. Ver README del modulo / docs de ElevenLabs para crear el agente y el numero.
+    elevenlabs:
+      api-key: ${ELEVENLABS_API_KEY:}
+      agent-id: ${ELEVENLABS_AGENT_ID:}
+      agent-phone-number-id: ${ELEVENLABS_PHONE_NUMBER_ID:}
+      timeout-ms: 10000
+      ringing-timeout-secs: 45
+    # Secreto compartido: ElevenLabs lo envia en la cabecera X-Telephony-Secret al pedir /agent-context/{userId}.
+    # Vacio = los webhooks responden 503 (cerrados). Obligatorio para usar la voz.
+    webhook-secret: ${TELEPHONY_WEBHOOK_SECRET:}
+    limits:
+      per-number-cooldown-seconds: 60
+      max-calls-per-hour: 20
+    # userId (clientId) -> portfolioId. Sin entrada, el userId se interpreta directamente como portfolioId.
+    portfolio-by-user:
+      CLI-001: PF-001
   openjev:
     base-url: http://localhost:8080/v1/systemone
     timeout-ms: 5000

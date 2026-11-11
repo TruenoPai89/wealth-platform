@@ -82,8 +82,12 @@ export function TaxModuleBootstrap({
 
   const enrichPositions = useCallback(
     async (currentPlan: RebalancePlan) => {
-      // Clave única del plan para evitar re-fetches con el mismo plan
-      const planKey = `${portfolioId}-${currentPlan.asOf}`;
+      // Clave única del plan para evitar re-fetches con el mismo plan. `asOf` no cambia al editar la meta,
+      // así que se incluyen las órdenes: si cambian, hay que recalcular los datos fiscales.
+      const ordersKey = currentPlan.orders
+        .map((o) => `${o.instrumentId}:${o.side}:${o.quantity}`)
+        .join("|");
+      const planKey = `${portfolioId}-${currentPlan.asOf}-${ordersKey}`;
       if (lastPlanRef.current === planKey) return;
       lastPlanRef.current = planKey;
 
