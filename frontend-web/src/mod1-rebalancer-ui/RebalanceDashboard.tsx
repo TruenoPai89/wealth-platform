@@ -31,6 +31,7 @@ import {
   executeRebalance,
   fetchBaskets,
   loadPortfolio,
+  mockExecuteRebalance,
   updateTargets,
   USE_MOCK,
 } from "@/core-ui/services/portfolioService";
@@ -65,16 +66,18 @@ function usePortfolio(portfolioId: string) {
     error: null,
   });
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<RebalancePlan | null> => {
     // Se conservan los datos previos mientras recarga (evita que los paneles parpadeen).
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
       const plan = await loadPortfolio(portfolioId);
       setState({ plan, isLoading: false, error: null });
+      return plan;
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Error desconocido al cargar el plan.";
       setState({ plan: null, isLoading: false, error: message });
+      return null;
     }
   }, [portfolioId]);
 
@@ -145,8 +148,13 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
     setShowOrders(true);
     setLastExecution(null);
     setViewMode("projected");
-    await refetch();
-    if (!USE_MOCK) {
+    const freshPlan = await refetch();
+
+    if (USE_MOCK && freshPlan && freshPlan.orders.length > 0) {
+      // En mock: simula la ejecución directamente, sin modal de confirmación
+      const execution = mockExecuteRebalance(freshPlan);
+      setLastExecution(execution);
+    } else if (!USE_MOCK) {
       setPreviewOpen(true); // pide confirmación real (solo con backend)
     }
   }
@@ -159,7 +167,12 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
     setShowOrders(true);
     setLastExecution(null);
     setViewMode("projected");
-    await refetch();
+    const freshPlan = await refetch();
+
+    if (USE_MOCK && freshPlan && freshPlan.orders.length > 0) {
+      const execution = mockExecuteRebalance(freshPlan);
+      setLastExecution(execution);
+    }
   }
 
   /** Acepta las órdenes: el backend las registra como transferencias y actualiza la cartera. */
