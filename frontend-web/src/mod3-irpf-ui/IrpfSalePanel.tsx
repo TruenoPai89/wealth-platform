@@ -131,7 +131,17 @@ export function IrpfSalePanel({ portfolioId = "PF-001" }: IrpfSalePanelProps) {
 
       {result && (
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <Kpi label="Resultado de la venta" value={formatEur(result.saleGainLoss)} />
+          <Kpi
+            label="Resultado de la venta"
+            value={formatEur(result.saleGainLoss)}
+            valueClass={
+              result.saleGainLoss > 0
+                ? "text-semantic-gain"
+                : result.saleGainLoss < 0
+                  ? "text-semantic-loss"
+                  : undefined
+            }
+          />
           <Kpi label="Cuota sin vender" value={formatEur(result.before.tax)} />
           <Kpi label="Cuota si vendes" value={formatEur(result.after.tax)} />
           <Kpi
@@ -168,7 +178,7 @@ function Kpi(props: { label: string; value: string; valueClass?: string }) {
   return (
     <div className="rounded-lg bg-surface-overlay p-4">
       <p className="text-xs text-gray-400">{props.label}</p>
-      <p className={`mt-1 text-lg font-semibold ${props.valueClass ?? "text-white"}`}>
+      <p className={`mt-1 text-lg font-semibold ${props.valueClass ?? "text-gray-200"}`}>
         {props.value}
       </p>
     </div>
