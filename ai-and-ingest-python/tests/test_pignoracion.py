@@ -362,3 +362,13 @@ def test_numero_de_clausula_no_valida_un_plazo_falso():
     texto = TEXTO.replace("5 dias habiles", "tres dias habiles")
     with pytest.raises(ExtraccionFallida):
         extraer_terminos(texto, llamar=lambda t, a: copy.deepcopy(malo), usar_cache=False)
+
+
+def test_cita_mezcla_digitos_y_letra():
+    # Como en el contrato real: "el 80 %" en digitos y "cinco dias" en letra. El 5 debe contar.
+    texto = TEXTO.replace("5 dias habiles", "cinco dias habiles")
+    variante = copy.deepcopy(CORRECTO)
+    variante["cita_plazo"] = "dispondra de cinco dias habiles"
+    resultado = extraer_terminos(texto, llamar=lambda t, a: copy.deepcopy(variante),
+                                 usar_cache=False)
+    assert resultado["terminos"]["plazo_reposicion_dias_habiles"] == 5

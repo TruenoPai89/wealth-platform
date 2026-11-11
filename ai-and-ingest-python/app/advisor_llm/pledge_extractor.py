@@ -19,7 +19,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from app.advisor_llm.verificador_cifras import cifras_en_texto
+from app.advisor_llm.verificador_cifras import _sin_tildes, cifras_en_texto
 
 from app.advisor_llm.pledge_terms import (
     HERRAMIENTA,
@@ -74,9 +74,26 @@ def _sin_numeracion(cita: str) -> str:
     return _NUM_CLAUSULA.sub(" ", cita)
 
 
+# Numeros escritos con letra y su valor. "uno/una" se omiten (son articulos) y "ciento" solo
+# aparece en "por ciento", asi que tampoco entra.
+_PALABRAS_NUM = {
+    "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7, "ocho": 8,
+    "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13, "catorce": 14, "quince": 15,
+    "veinte": 20, "treinta": 30, "cuarenta": 40, "cincuenta": 50, "sesenta": 60,
+    "setenta": 70, "ochenta": 80, "noventa": 90, "cien": 100,
+}
+
+
+def _numeros_en_cita(cita: str) -> list[float]:
+    """Cifras en digitos y en letra de una cita, sin la numeracion de clausula."""
+    texto = _sin_numeracion(cita)
+    palabras = re.findall(r"[a-z]+", _sin_tildes(texto).lower())
+    return cifras_en_texto(texto) + [float(_PALABRAS_NUM[w]) for w in palabras if w in _PALABRAS_NUM]
+
+
 def _numero_en_cita(valor: float, cita: str) -> bool:
-    numeros = cifras_en_texto(_sin_numeracion(cita))
-    if not numeros:  # numero escrito con letra ("cinco dias"): no se puede comprobar, se acepta
+    numeros = _numeros_en_cita(cita)
+    if not numeros:  # ninguna cifra que comparar: no se puede comprobar, se acepta
         return True
     return any(abs(valor - n) < 0.01 for n in numeros)
 
@@ -85,7 +102,7 @@ def _problema_haircut(h) -> str | None:
     """El haircut debe salir de la cita: 'aforo del 70 %' -> 0,30; 'descuento del 10 %' -> 0,10;
     'valor integro' -> 0."""
     cita = _norm(h.cita).lower().replace("í", "i")
-    numeros = [n / 100 for n in cifras_en_texto(_sin_numeracion(h.cita))]
+    numeros = [n / 100 for n in _numeros_en_cita(h.cita)]
     if "integro" in cita:
         validos = [0.0]
     elif "aforo" in cita:
