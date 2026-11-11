@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "ai-and-ingest-python": {
+      "root": "ai-and-ingest-python",
+      "framework": "fastapi"
+    },
+    "frontend-web": {
+      "root": "frontend-web",
+      "framework": "nextjs"
+    }
+  },
+  "rewrites": []
+}
