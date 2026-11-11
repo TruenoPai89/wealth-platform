@@ -151,7 +151,7 @@ export function PledgePanel({
       {/* ── 1. Contrato ───────────────────────────────────────────── */}
 
       <section className="rounded-xl border border-surface-border bg-surface-raised p-6">
-        <h2 className="text-lg font-semibold text-white">
+        <h2 className="text-lg font-semibold text-fg">
           1. Tu contrato de pignoración
         </h2>
 
@@ -205,7 +205,7 @@ export function PledgePanel({
       {t && (
         <section className="rounded-xl border border-surface-border bg-surface-raised p-6">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-fg">
               2. Revisa los términos
             </h2>
 
@@ -275,7 +275,7 @@ export function PledgePanel({
                 step="any"
                 value={loanBalance}
                 onChange={(e) => setLoanBalance(e.target.value)}
-                className="rounded-md bg-surface-overlay border border-surface-border px-3 py-2 text-sm text-white"
+                className="rounded-md bg-surface-overlay border border-surface-border px-3 py-2 text-sm text-fg"
               />
             </label>
 
@@ -295,7 +295,7 @@ export function PledgePanel({
       {status && (
         <section className="rounded-xl border border-surface-border bg-surface-raised p-6">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-fg">
               3. Estado de tu préstamo
             </h2>
 
@@ -333,7 +333,7 @@ export function PledgePanel({
 
           <label className="mt-6 flex flex-col gap-2 text-sm text-gray-300">
             Simular caída de la renta variable:
-            <strong className="text-white">
+            <strong className="text-fg">
               {pct(shock, 0)}
             </strong>
 
@@ -359,7 +359,7 @@ export function PledgePanel({
 
             <li>
               Probabilidad estimada de margin call en {status.horizonDays} días:{" "}
-              <strong className="text-white">
+              <strong className="text-fg">
                 {pct(status.marginCallProbability, 2)}
               </strong>{" "}
               <span className="text-xs text-gray-500">
@@ -371,7 +371,7 @@ export function PledgePanel({
 
           {status.actions.repayCash > 0 && (
             <div className="mt-5">
-              <p className="text-sm font-medium text-white">
+              <p className="text-sm font-medium text-fg">
                 Opciones para volver al límite
               </p>
 
@@ -436,7 +436,7 @@ function TermRow(props: {
         {props.label}
       </td>
 
-      <td className="py-2 pr-4 font-medium text-white whitespace-nowrap">
+      <td className="py-2 pr-4 font-medium text-fg whitespace-nowrap">
         {props.value}
       </td>
 
@@ -500,7 +500,7 @@ function Kpi(props: {
       </p>
 
       <p
-        className={`mt-1 text-lg font-semibold ${props.valueClass ?? "text-white"}`}
+        className={`mt-1 text-lg font-semibold ${props.valueClass ?? "text-fg"}`}
       >
         {props.value}
       </p>

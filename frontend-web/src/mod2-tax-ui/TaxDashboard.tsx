@@ -85,7 +85,7 @@ function TaxPositionRow({ position, isEven }: PositionRowProps) {
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-white">{position.name}</span>
+            <span className="text-sm font-medium text-fg">{position.name}</span>
             {/* Slot manual del badge — en esta página no usamos SlotRegistry */}
             <TwoMonthWarningBadge position={position} />
             {canHarvest && (
@@ -212,7 +212,7 @@ export function TaxDashboard({ portfolioId = "PF-001" }: TaxDashboardProps) {
       {/* Cabecera */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white">Optimizador Fiscal</h1>
+          <h1 className="text-xl font-bold text-fg">Optimizador Fiscal</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             Análisis FIFO · Regla de los 2 meses (Art. 33.5 LIRPF) · Tax-Loss Harvesting
           </p>
@@ -220,7 +220,7 @@ export function TaxDashboard({ portfolioId = "PF-001" }: TaxDashboardProps) {
         <button
           onClick={() => void load()}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border border-surface-border text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border border-surface-border text-gray-400 hover:text-fg hover:border-gray-500 disabled:opacity-50 transition-colors"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isLoading ? "animate-spin" : ""} aria-hidden="true">
             <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
@@ -233,10 +233,10 @@ export function TaxDashboard({ portfolioId = "PF-001" }: TaxDashboardProps) {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Órdenes de venta", value: sellCount > 0 ? `${sellCount}` : "—", color: "text-white" },
+          { label: "Órdenes de venta", value: `${sellCount}`, color: "text-fg" },
           { label: "Impuesto estimado", value: totalTax > 0 ? `-${fmtEur(totalTax)}` : "0,00 €", color: totalTax > 0 ? "text-semantic-loss" : "text-gray-400" },
-          { label: "Harvesting potencial", value: totalHarvestable > 0 ? fmtEur(totalHarvestable) : "—", color: totalHarvestable > 0 ? "text-semantic-gain" : "text-gray-400" },
-          { label: "Alertas Regla 2M", value: violations > 0 ? `${violations}` : "—", color: violations > 0 ? "text-semantic-warning" : "text-gray-400" },
+          { label: "Harvesting potencial", value: totalHarvestable > 0 ? fmtEur(totalHarvestable) : "0,00 €", color: totalHarvestable > 0 ? "text-semantic-gain" : "text-gray-400" },
+          { label: "Alertas Regla 2M", value: `${violations}`, color: violations > 0 ? "text-semantic-warning" : "text-gray-400" },
         ].map((kpi) => (
           <div key={kpi.label} className="rounded-xl border border-surface-border bg-surface-raised px-4 py-4">
             <p className="text-xs text-gray-500 mb-1.5">{kpi.label}</p>

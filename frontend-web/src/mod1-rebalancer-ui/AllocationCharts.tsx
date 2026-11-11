@@ -120,12 +120,12 @@ function Donut({ rings, centerTop, centerBottom, ariaLabel }: {
 
 function Legend({ rows }: { rows: { key: string; label: string; color: string; current: number; target: number }[] }) {
   return (
-    <table className="text-sm w-full" aria-label="Leyenda del gráfico">
+    <table className="text-sm w-full table-auto" aria-label="Leyenda del gráfico">
       <thead>
         <tr className="text-xs text-gray-500 uppercase tracking-wider">
-          <th className="text-left font-semibold pb-1.5">Activo</th>
-          <th className="text-right font-semibold pb-1.5 pl-3">Actual</th>
-          <th className="text-right font-semibold pb-1.5 pl-3">Objetivo</th>
+          <th className="text-left font-semibold pb-1.5 whitespace-nowrap">Activo</th>
+          <th className="text-right font-semibold pb-1.5 pl-3 whitespace-nowrap">Actual</th>
+          <th className="text-right font-semibold pb-1.5 pl-3 whitespace-nowrap">Objetivo</th>
         </tr>
       </thead>
       <tbody>
@@ -133,14 +133,14 @@ function Legend({ rows }: { rows: { key: string; label: string; color: string; c
           const gap = r.current - r.target;
           return (
             <tr key={r.key} data-testid={`legend-${r.key}`}>
-              <td className="py-1 pr-2">
-                <span className="inline-flex items-center gap-2 min-w-0">
+              <td className="py-1 pr-2 w-full max-w-0">
+                <span className="inline-flex items-center gap-2 min-w-0 max-w-full">
                   <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: r.color }} aria-hidden="true" />
                   <span className="text-fg truncate" title={r.label}>{r.label}</span>
                 </span>
               </td>
-              <td className="py-1 pl-3 text-right font-mono text-fg">{formatWeight(r.current)}</td>
-              <td className="py-1 pl-3 text-right font-mono">
+              <td className="py-1 pl-3 text-right font-mono text-fg whitespace-nowrap">{formatWeight(r.current)}</td>
+              <td className="py-1 pl-3 text-right font-mono whitespace-nowrap">
                 <span className="text-gray-500">{formatWeight(r.target)}</span>
                 {Math.abs(gap) >= 0.005 && (
                   <span className={`ml-2 text-xs ${gap > 0 ? "text-semantic-warning" : "text-blue-400"}`}>
@@ -210,7 +210,7 @@ export function AllocationCharts({ positions, viewLabel }: { positions: ChartPos
             { label: "clase-objetivo", radius: 13.4, stroke: 3.4, slices: toSlices(byClass, "target") },
           ]}
         />
-        <div className="flex-1 min-w-[260px]">
+        <div className="flex-1 min-w-0 basis-64 overflow-x-auto">
           <Legend rows={byClass} />
         </div>
       </ChartCard>
@@ -225,7 +225,7 @@ export function AllocationCharts({ positions, viewLabel }: { positions: ChartPos
             { label: "fondo-objetivo", radius: 13.4, stroke: 3.4, slices: toSlices(byFund, "target") },
           ]}
         />
-        <div className="flex-1 min-w-[260px]">
+        <div className="flex-1 min-w-0 basis-64 overflow-x-auto">
           <Legend rows={byFund} />
         </div>
       </ChartCard>
