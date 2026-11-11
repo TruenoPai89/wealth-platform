@@ -18,6 +18,8 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from app.advisor_llm.verificador_cifras import cifras_en_texto
+
 from app.advisor_llm.pledge_terms import (
     HERRAMIENTA,
     TerminosPignoracion,
@@ -63,6 +65,29 @@ def _norm(s: str) -> str:
     return " ".join(s.split())
 
 
+def _numero_en_cita(valor: float, cita: str) -> bool:
+    return any(abs(valor - n) < 0.01 for n in cifras_en_texto(cita))
+
+
+def _problema_haircut(h) -> str | None:
+    """El haircut debe salir de la cita: 'aforo del 70 %' -> 0,30; 'descuento del 10 %' -> 0,10;
+    'valor integro' -> 0."""
+    cita = _norm(h.cita).lower().replace("í", "i")
+    numeros = [n / 100 for n in cifras_en_texto(h.cita)]
+    if "integro" in cita:
+        validos = [0.0]
+    elif "aforo" in cita:
+        validos = [round(1 - n, 4) for n in numeros]
+    elif "descuento" in cita:
+        validos = numeros
+    else:
+        return None  # sin palabra clave no se puede decidir
+    if any(abs(h.haircut - v) < 0.0001 for v in validos):
+        return None
+    return (f"haircut de {h.clase.value}={h.haircut} no sale de su cita "
+            f"(esperado {sorted(set(validos))}): {h.cita!r}")
+
+
 def problemas_de(
     texto: str,
     t: TerminosPignoracion,
@@ -92,6 +117,23 @@ def problemas_de(
                 f"La cita de {h.clase.value} no aparece literalmente: "
                 f"{h.cita!r}"
             )
+
+    # Comprobar que cada VALOR coincide con el numero de SU cita (la cita puede ser literal y el
+    # valor estar mal: p. ej. cita "70 %" con ltv_maximo = 0.80).
+    for nombre, valor, cita, factor in (
+        ("ltv_maximo", t.ltv_maximo, t.cita_ltv_maximo, 100),
+        ("ltv_margin_call", t.ltv_margin_call, t.cita_margin_call, 100),
+        ("plazo_reposicion_dias_habiles", t.plazo_reposicion_dias_habiles, t.cita_plazo, 1),
+    ):
+        if valor is not None and cita and not _numero_en_cita(valor * factor, cita):
+            problemas.append(
+                f"{nombre}={valor} no coincide con ningun numero de su cita: {cita!r}"
+            )
+
+    for h in t.haircuts:
+        problema = _problema_haircut(h)
+        if problema:
+            problemas.append(problema)
 
     # Comprobar la coherencia entre los dos umbrales.
     if (
