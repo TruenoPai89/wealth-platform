@@ -72,6 +72,9 @@ export function TaxModuleBootstrap({
   // ── 2. Estado del drawer ───────────────────────────────────────────────────
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [taxLoading, setTaxLoading] = useState(false);
+  // Posiciones ya enriquecidas con taxSummary: el drawer debe leer de aquí,
+  // no de plan.positions (que no lleva datos fiscales).
+  const [enrichedLocal, setEnrichedLocal] = useState<AssetPosition[] | null>(null);
 
   // ── 3. Cargar datos fiscales cuando el plan cambia ─────────────────────────
   // Usamos una ref para evitar dobles llamadas en StrictMode de React
@@ -107,9 +110,12 @@ export function TaxModuleBootstrap({
           };
         });
 
+        setEnrichedLocal(enriched);
         onPositionsEnriched(enriched);
-      } catch {
-        // Fallo silencioso: el Módulo 2 no bloquea al Módulo 1
+      } catch (err) {
+        // El Módulo 2 no bloquea al Módulo 1, pero dejamos rastro del fallo
+        console.error("[Módulo 2] No se pudieron cargar los datos fiscales:", err);
+        setEnrichedLocal(null);
         onPositionsEnriched(currentPlan.positions as AssetPosition[]);
       } finally {
         setTaxLoading(false);
@@ -123,9 +129,9 @@ export function TaxModuleBootstrap({
   }, [plan, enrichPositions]);
 
   // ── 4. Posiciones SELL con datos fiscales para el drawer ───────────────────
-  const sellPositions: AssetPosition[] = (plan?.positions ?? [])
-    .filter((p) => p.order?.side === "SELL")
-    .map((p) => p as AssetPosition);
+  const sellPositions: AssetPosition[] = (
+    enrichedLocal ?? ((plan?.positions ?? []) as AssetPosition[])
+  ).filter((p) => p.order?.side === "SELL");
 
   // ── 5. Render: botón de acceso al Drawer + el Drawer en sí ────────────────
   return (
