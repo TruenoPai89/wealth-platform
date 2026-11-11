@@ -109,8 +109,8 @@ Comprobación de la voz: `GET http://localhost:8080/api/v1/voice/web-session?use
 
 | Qué | Comando | Resultado esperado |
 | --- | --- | --- |
-| Backend | `cd backend-core-java` y `mvn test` | 251 tests, `BUILD SUCCESS` |
-| Servicio de IA | `cd ai-and-ingest-python`, venv activo, `python -m pytest tests` | 38 passed |
+| Backend | `cd backend-core-java` y `mvn test` | 301 tests, `BUILD SUCCESS` |
+| Servicio de IA | `cd ai-and-ingest-python`, venv activo, `python -m pytest tests` | 48 passed |
 | Frontend | `cd frontend-web` y `npm run build` | Compilación sin errores |
 
 Ninguna prueba automática llama a Claude ni a ElevenLabs, así que no consumen crédito: los tests de voz usan un servidor de ElevenLabs falso en local. Entre los tests de IA hay casos adversariales: respuestas simuladas que inventan una cifra o una cita deben acabar rechazadas o en plantilla.
