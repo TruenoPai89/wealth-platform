@@ -82,7 +82,7 @@ function WeightBar({ current, target }: { current: number; target: number }) {
   const textColor = isOver ? "text-semantic-warning" : isUnder ? "text-blue-400" : "text-semantic-gain";
 
   return (
-    <div className="flex flex-col gap-1 min-w-[120px]">
+    <div className="flex flex-col gap-1 min-w-[7.5rem]">
       <div className="flex justify-between text-xs">
         <span className={textColor}>{fmtPct(current)}</span>
         <span className="text-gray-500">obj. {fmtPct(target)}</span>
@@ -141,7 +141,7 @@ function PnlCell({ position }: { position: AssetPosition }) {
           {amount === 0 ? "—" : fmtEur(amount)}
         </span>
         {pct !== 0 && (
-          <span className={`text-xs ${color} opacity-80`}>{fmtPnlPct(pct)}</span>
+          <span className={`text-xs num ${color}`}>{fmtPnlPct(pct)}</span>
         )}
       </div>
     );
@@ -165,7 +165,7 @@ function PnlCell({ position }: { position: AssetPosition }) {
         {unrealized === 0 ? "—" : fmtEur(unrealized)}
       </span>
       {unrealizedPct !== 0 && (
-        <span className={`text-xs ${color} opacity-80`}>{fmtPnlPct(unrealizedPct)}</span>
+        <span className={`text-xs num ${color}`}>{fmtPnlPct(unrealizedPct)}</span>
       )}
     </div>
   );
@@ -249,10 +249,11 @@ function PositionRow({ position, isEven }: { position: AssetPosition; isEven: bo
 
 function SkeletonRow() {
   return (
-    <tr className="border-b border-surface-border animate-pulse">
-      {[48, 96, 24, 20].map((w, i) => (
+    <tr className="border-b border-surface-border" aria-hidden="true">
+      {/* Anchos como clases completas (Tailwind no detecta `w-${n}` construidas en tiempo de ejecución) */}
+      {["w-40", "w-full max-w-[12rem]", "w-24 ml-auto", "w-20 ml-auto"].map((w, i) => (
         <td key={i} className="px-4 py-3">
-          <div className={`h-4 bg-surface-overlay rounded w-${w}`} />
+          <div className={`skeleton h-4 ${w}`} />
         </td>
       ))}
     </tr>
@@ -279,7 +280,7 @@ function TableHeader({ plan }: { plan: RebalancePlan }) {
             <span className="font-mono text-gray-400">{plan.clientId}</span>
           </p>
         </div>
-        <div className="text-right">
+        <div className="sm:text-right">
           <p className="text-xs text-gray-600">Valoración</p>
           <p className="text-sm text-gray-400">
             {new Date(plan.asOf).toLocaleDateString("es-ES", {
@@ -290,7 +291,7 @@ function TableHeader({ plan }: { plan: RebalancePlan }) {
       </div>
 
       {/* KPIs principales */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         <KpiCard label="Valor Total" value={fmtEur(plan.totalValue)} accent="neutral" />
         {/* Schema 1.1: coste total y P&L no realizado calculados por el backend */}
         {plan.performance && (
@@ -334,10 +335,11 @@ function KpiCard({ label, value, sub, accent }: {
 }) {
   const c = { gain: "text-semantic-gain", loss: "text-semantic-loss", warning: "text-semantic-warning", neutral: "text-fg" }[accent];
   return (
-    <div className="bg-surface-raised border border-surface-border rounded-lg px-4 py-3">
+    <div className="min-w-0 bg-surface-raised border border-surface-border rounded-lg px-4 py-3">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <p className={`text-base font-semibold font-mono ${c}`}>{value}</p>
-      {sub && <p className={`text-xs mt-0.5 ${c} opacity-80`}>{sub}</p>}
+      {/* num = cifras tabulares sin salto de línea; truncate evita que un importe largo ensanche la tarjeta */}
+      <p className={`text-base font-semibold font-mono num truncate ${c}`} title={value}>{value}</p>
+      {sub && <p className={`text-xs mt-0.5 num truncate ${c}`}>{sub}</p>}
     </div>
   );
 }
@@ -346,9 +348,9 @@ function KpiCard({ label, value, sub, accent }: {
 
 function CashFlowPanel({ cashFlow }: { cashFlow: CashFlowSummary }) {
   return (
-    <div className="bg-surface-raised border border-surface-border rounded-xl px-5 py-4 mt-4">
+    <div className="bg-surface-raised border border-surface-border rounded-xl px-4 sm:px-5 py-4 mt-4">
       <h3 className="text-sm font-semibold text-gray-400 mb-3">Flujo de Caja del Rebalanceo</h3>
-      <div className="flex flex-wrap gap-6 text-sm">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap gap-x-6 gap-y-3 text-sm num">
         <div>
           <p className="text-xs text-gray-600">Efectivo inicial</p>
           <p className="font-mono text-fg">{fmtEur(cashFlow.cashBefore)}</p>
@@ -398,12 +400,12 @@ export function PositionsTableWithSlots({ plan, isLoading = false, error = null 
 
       {/* Tabla */}
       <div className="bg-surface-raised border border-surface-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" aria-label="Tabla de posiciones de cartera">
+        <div className="table-scroll" tabIndex={0} role="region" aria-label="Posiciones de cartera (desplazable horizontalmente)">
+          <table className="w-full min-w-[40rem] text-sm" aria-label="Tabla de posiciones de cartera">
             <thead>
               <tr className="border-b border-surface-border bg-surface-overlay/50">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Activo</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[160px]">Peso · Delta</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[10rem]">Peso · Delta</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Valor · Orden</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">P&amp;L / Movimiento</th>
               </tr>

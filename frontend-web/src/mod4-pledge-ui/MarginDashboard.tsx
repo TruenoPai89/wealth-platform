@@ -28,6 +28,7 @@ import {
   YAxis,
 } from "recharts";
 import { formatEur } from "@/core-ui/format";
+import { useChartTheme } from "@/core-ui/useChartTheme";
 import type { MarginRiskAnalysis } from "@/core-ui/types/margin";
 import type { PledgeZone } from "@/core-ui/types/pledge";
 
@@ -39,8 +40,6 @@ const ZONE: Record<PledgeZone, { label: string; text: string }> = {
   MARGIN_CALL: { label: "Margin call", text: "text-semantic-loss" },
 };
 
-// Colores fijos (legibles en tema claro y oscuro), como en AllocationCharts.
-const C = { collateral: "#3b82f6", required: "#ef4444", weight: "#14b8a6", risk: "#f59e0b", grid: "#94a3b8" };
 
 interface Props {
   analysis: MarginRiskAnalysis;
@@ -63,7 +62,7 @@ export function MarginDashboard({ analysis, stale }: Props) {
       aria-busy={stale}
       data-testid="margin-dashboard"
     >
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         <Kpi
           label="LTV actual"
           value={pct(m.ltv)}
@@ -100,7 +99,7 @@ export function MarginDashboard({ analysis, stale }: Props) {
         </Kpi>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 2xl:grid-cols-2">
         <DrawdownChart analysis={analysis} />
         <FundBreakdownChart analysis={analysis} />
       </div>
@@ -111,6 +110,7 @@ export function MarginDashboard({ analysis, stale }: Props) {
 // ─── Gráfica 1: caída del colateral vs umbral de ejecución ────────────────────
 
 function DrawdownChart({ analysis }: { analysis: MarginRiskAnalysis }) {
+  const C = useChartTheme();
   const required = analysis.metrics.requiredCollateral;
   const data = analysis.drawdownCurve.map((p) => ({
     drop: Math.round(p.drop * 100),
@@ -121,13 +121,13 @@ function DrawdownChart({ analysis }: { analysis: MarginRiskAnalysis }) {
   const trigger = analysis.metrics.distanceToMarginCall;
 
   return (
-    <div className="rounded-xl border border-surface-border bg-surface-raised p-5" data-testid="drawdown-chart">
+    <div className="min-w-0 rounded-xl border border-surface-border bg-surface-raised p-4 sm:p-5" data-testid="drawdown-chart">
       <h3 className="text-sm font-semibold text-fg">Simulación de caída de mercado</h3>
       <p className="mt-0.5 text-xs text-gray-500">
         Valor de la garantía si todos los fondos aportados caen, frente a la garantía mínima (umbral de ejecución).
       </p>
 
-      <div className="mt-3 h-64" role="img" aria-label="Valor de la garantía según la caída de mercado frente al umbral de margin call">
+      <div className="mt-3 h-56 sm:h-64" role="img" aria-label="Valor de la garantía según la caída de mercado frente al umbral de margin call">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 22, right: 12, bottom: 4, left: 4 }}>
             <CartesianGrid stroke={C.grid} strokeOpacity={0.25} vertical={false} />
@@ -137,27 +137,27 @@ function DrawdownChart({ analysis }: { analysis: MarginRiskAnalysis }) {
               domain={[0, 60]}
               ticks={[0, 10, 20, 30, 40, 50, 60]}
               tickFormatter={(v: number) => (v === 0 ? "0 %" : `−${v} %`)}
-              tick={{ fontSize: 11, fill: C.grid }}
-              stroke={C.grid}
+              tick={{ fontSize: 11, fill: C.axis }}
+              stroke={C.axis}
             />
             <YAxis
               tickFormatter={(v: number) => `${Math.round(v / 1000)}k`}
-              tick={{ fontSize: 11, fill: C.grid }}
-              stroke={C.grid}
+              tick={{ fontSize: 11, fill: C.axis }}
+              stroke={C.axis}
               width={44}
             />
             <Tooltip
               formatter={(value, name) => [formatEur(Number(value ?? 0)), String(name ?? "")]}
               labelFormatter={(l) => `Caída de −${String(l)} %`}
-              contentStyle={{ background: "rgb(var(--surface-raised))", border: "1px solid rgb(var(--surface-border))", borderRadius: 8, fontSize: 12 }}
+              contentStyle={C.tooltip}
             />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => <span style={{ color: C.axis }}>{String(v)}</span>} />
             <Area
               type="monotone"
               dataKey="collateral"
               name="Garantía computable"
-              stroke={C.collateral}
-              fill={C.collateral}
+              stroke={C.primary}
+              fill={C.primary}
               fillOpacity={0.18}
               strokeWidth={2}
               isAnimationActive={false}
@@ -166,21 +166,21 @@ function DrawdownChart({ analysis }: { analysis: MarginRiskAnalysis }) {
               type="linear"
               dataKey="required"
               name="Garantía mínima (margin call)"
-              stroke={C.required}
+              stroke={C.danger}
               strokeWidth={2}
               strokeDasharray="6 4"
               dot={false}
               isAnimationActive={false}
             />
             {[10, 20, 30].map((d) => (
-              <ReferenceLine key={d} x={d} stroke={C.grid} strokeDasharray="2 4" label={{ value: `−${d} %`, fontSize: 10, fill: C.grid, position: "top" }} />
+              <ReferenceLine key={d} x={d} stroke={C.grid} strokeDasharray="2 4" label={{ value: `−${d} %`, fontSize: 10, fill: C.axis, position: "top" }} />
             ))}
             {trigger > 0 && trigger * 100 <= 60 && (
               <ReferenceLine
                 x={trigger * 100}
-                stroke={C.required}
+                stroke={C.danger}
                 strokeOpacity={0.7}
-                label={{ value: `Margin call ≈ −${(trigger * 100).toFixed(0)} %`, fontSize: 10, fill: C.required, position: "insideTopRight" }}
+                label={{ value: `Margin call ≈ −${(trigger * 100).toFixed(0)} %`, fontSize: 10, fill: C.danger, position: "insideTopRight" }}
               />
             )}
           </ComposedChart>
@@ -193,6 +193,7 @@ function DrawdownChart({ analysis }: { analysis: MarginRiskAnalysis }) {
 // ─── Gráfica 2: peso vs contribución al riesgo por fondo ──────────────────────
 
 function FundBreakdownChart({ analysis }: { analysis: MarginRiskAnalysis }) {
+  const C = useChartTheme();
   const data = analysis.funds.map((f) => ({
     name: f.name,
     weight: +(f.weight * 100).toFixed(1),
@@ -200,32 +201,32 @@ function FundBreakdownChart({ analysis }: { analysis: MarginRiskAnalysis }) {
   }));
 
   return (
-    <div className="rounded-xl border border-surface-border bg-surface-raised p-5" data-testid="fund-breakdown">
+    <div className="min-w-0 rounded-xl border border-surface-border bg-surface-raised p-4 sm:p-5" data-testid="fund-breakdown">
       <h3 className="text-sm font-semibold text-fg">Volatilidad e impacto por fondo</h3>
       <p className="mt-0.5 text-xs text-gray-500">
         Un fondo volátil pesa más en el riesgo que en la garantía. Volatilidad de la garantía:{" "}
         <strong className="text-fg">{pct(analysis.metrics.collateralVolatility)}</strong> anual.
       </p>
 
-      <div className="mt-3 h-44" role="img" aria-label="Peso en la garantía frente a contribución al riesgo de cada fondo">
+      <div className="mt-3 h-48 sm:h-44" role="img" aria-label="Peso en la garantía frente a contribución al riesgo de cada fondo">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
             <CartesianGrid stroke={C.grid} strokeOpacity={0.25} horizontal={false} />
-            <XAxis type="number" domain={[0, 100]} unit=" %" tick={{ fontSize: 11, fill: C.grid }} stroke={C.grid} />
-            <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11, fill: C.grid }} stroke={C.grid} />
+            <XAxis type="number" domain={[0, 100]} unit=" %" tick={{ fontSize: 11, fill: C.axis }} stroke={C.axis} />
+            <YAxis type="category" dataKey="name" width={104} tick={{ fontSize: 11, fill: C.axis }} stroke={C.axis} />
             <Tooltip
               formatter={(v, n) => [`${Number(v ?? 0).toFixed(1).replace(".", ",")} %`, String(n ?? "")]}
-              contentStyle={{ background: "rgb(var(--surface-raised))", border: "1px solid rgb(var(--surface-border))", borderRadius: 8, fontSize: 12 }}
+              contentStyle={C.tooltip}
             />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="weight" name="Peso en la garantía" fill={C.weight} isAnimationActive={false} />
-            <Bar dataKey="risk" name="Contribución al riesgo" fill={C.risk} isAnimationActive={false} />
+            <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => <span style={{ color: C.axis }}>{String(v)}</span>} />
+            <Bar dataKey="weight" name="Peso en la garantía" fill={C.secondary} isAnimationActive={false} />
+            <Bar dataKey="risk" name="Contribución al riesgo" fill={C.tertiary} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-3 overflow-x-auto">
-        <table className="w-full text-xs" aria-label="Impacto individual de cada fondo en garantía">
+      <div className="table-scroll mt-3" tabIndex={0} role="region" aria-label="Impacto por fondo (desplazable horizontalmente)">
+        <table className="w-full min-w-[30rem] text-xs" aria-label="Impacto individual de cada fondo en garantía">
           <thead>
             <tr className="text-left text-gray-500">
               <th className="py-1 pr-3 font-normal">Fondo</th>
@@ -269,9 +270,9 @@ function Kpi(props: {
   children?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-surface-border bg-surface-raised p-4" data-testid={props.testId}>
+    <div className="min-w-0 rounded-xl border border-surface-border bg-surface-raised p-4" data-testid={props.testId}>
       <p className="text-xs text-gray-400">{props.label}</p>
-      <p className={`mt-1 text-2xl font-semibold ${props.valueClass ?? "text-fg"}`}>{props.value}</p>
+      <p className={`mt-1 truncate font-mono text-xl font-semibold num sm:text-2xl ${props.valueClass ?? "text-fg"}`} title={props.value}>{props.value}</p>
       {props.sub && <p className="mt-0.5 text-xs text-gray-500">{props.sub}</p>}
       {props.children}
     </div>

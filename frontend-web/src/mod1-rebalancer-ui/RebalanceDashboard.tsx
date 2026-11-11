@@ -91,12 +91,8 @@ interface RebalanceDashboardProps {
   portfolioId?: string;
 }
 
-const BUTTON_BASE = [
-  "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium",
-  "disabled:opacity-50 disabled:cursor-not-allowed",
-  "transition-colors duration-150",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
-].join(" ");
+// Botones del sistema de diseño (ver .btn en globals.css): hover, foco visible y active consistentes.
+const BUTTON_BASE = "btn";
 
 export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboardProps) {
   const { plan, isLoading, error, refetch } = usePortfolio(portfolioId);
@@ -203,7 +199,7 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
           <h1 className="text-2xl font-bold text-fg">Mis Inversiones</h1>
           <p className="text-sm text-gray-500 mt-0.5">Rebalanceador de cartera — Módulo 1</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Origen de datos: backend real (por defecto) o mock (NEXT_PUBLIC_USE_MOCK=true) */}
           <span className="inline-flex items-center gap-1.5 text-xs bg-brand-950 border border-brand-800 text-brand-300 px-3 py-1.5 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" aria-hidden="true" />
@@ -214,7 +210,7 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
               type="button"
               onClick={() => setEditingTargets((v) => !v)}
               disabled={isLoading}
-              className={`${BUTTON_BASE} bg-surface-overlay text-gray-200 hover:text-fg border border-surface-border`}
+              className={`${BUTTON_BASE} btn-secondary`}
             >
               Editar meta
             </button>
@@ -223,7 +219,7 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
             type="button"
             onClick={() => void handleRebalance()}
             disabled={isLoading}
-            className={`${BUTTON_BASE} bg-brand-600 text-white hover:bg-brand-500`}
+            className={`${BUTTON_BASE} btn-primary`}
           >
             <RefreshIcon spinning={isLoading} />
             {isLoading ? "Cargando..." : USE_MOCK ? "Actualizar" : "Rebalancear"}

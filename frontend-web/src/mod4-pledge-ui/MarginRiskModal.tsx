@@ -80,14 +80,14 @@ export function MarginRiskModal({ analysis, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="margin-risk-title"
       data-testid="margin-risk-modal"
     >
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-surface-border bg-surface-raised shadow-2xl">
-        <header className="flex items-start justify-between gap-4 border-b border-surface-border px-6 py-4">
+      <div className="flex max-h-[90vh] max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-surface-border bg-surface-raised shadow-2xl sm:rounded-xl">
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-surface-border px-4 py-4 sm:px-6">
           <div>
             <h2 id="margin-risk-title" className="text-lg font-semibold text-fg">
               Análisis de riesgo de Margin Call
@@ -102,13 +102,13 @@ export function MarginRiskModal({ analysis, onClose }: Props) {
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-md px-2 py-1 text-gray-400 hover:bg-surface-overlay hover:text-fg"
+            className="rounded-md px-2 py-1 text-gray-400 transition-colors hover:bg-surface-overlay hover:text-fg active:bg-surface-overlay/70"
           >
             ✕
           </button>
         </header>
 
-        <div className="flex flex-col gap-6 overflow-y-auto px-6 py-5">
+        <div className="flex flex-col gap-6 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
           {/* Nivel de seguridad */}
           <div className={`rounded-lg border px-4 py-3 ${level.ring}`} data-testid="security-level">
             <p className="text-xs text-gray-400">Nivel de seguridad</p>
@@ -119,7 +119,11 @@ export function MarginRiskModal({ analysis, onClose }: Props) {
           {/* Explicación IA */}
           <div className="rounded-lg bg-surface-overlay p-4 text-sm text-gray-200" data-testid="ai-explanation">
             {explaining ? (
-              <p className="animate-pulse text-gray-400">Redactando la explicación…</p>
+              <div className="flex flex-col gap-2" role="status" aria-label="Redactando la explicación">
+                <div className="skeleton h-3.5 w-full" aria-hidden="true" />
+                <div className="skeleton h-3.5 w-11/12" aria-hidden="true" />
+                <div className="skeleton h-3.5 w-4/5" aria-hidden="true" />
+              </div>
             ) : explanation ? (
               <>
                 <p>{explanation.texto}</p>
@@ -142,11 +146,11 @@ export function MarginRiskModal({ analysis, onClose }: Props) {
             <h3 id="mc-prob-title" className="text-sm font-semibold text-fg">
               Probabilidad de margin call
             </h3>
-            <div className="mt-2 grid grid-cols-3 gap-3">
+            <div className="mt-2 grid grid-cols-1 gap-3 min-[420px]:grid-cols-3">
               {analysis.marginCallProbability.map((p) => (
                 <div key={p.horizonDays} className="rounded-lg bg-surface-overlay p-3 text-center" data-testid={`prob-${p.horizonDays}`}>
                   <p className="text-xs text-gray-400">{p.horizonDays} días</p>
-                  <p className="text-xl font-semibold text-fg">{pct(p.probability, 2)}</p>
+                  <p className="font-mono text-xl font-semibold tabular-nums text-fg">{pct(p.probability, 2)}</p>
                 </div>
               ))}
             </div>
@@ -157,8 +161,8 @@ export function MarginRiskModal({ analysis, onClose }: Props) {
             <h3 id="mc-stress-title" className="text-sm font-semibold text-fg">
               Test de estrés (caída simultánea de todos los fondos)
             </h3>
-            <div className="mt-2 overflow-x-auto">
-              <table className="w-full text-sm" aria-label="Escenarios de estrés">
+            <div className="table-scroll mt-2" tabIndex={0} role="region" aria-label="Escenarios de estrés (desplazable horizontalmente)">
+              <table className="w-full min-w-[34rem] text-sm" aria-label="Escenarios de estrés">
                 <thead>
                   <tr className="text-left text-xs text-gray-500">
                     <th className="py-1 pr-3 font-normal">Escenario</th>

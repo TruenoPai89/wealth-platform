@@ -2,65 +2,134 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Variables de diseño ────────────────────────────────────────────────── */
+/*
+  ─── Sistema de diseño: tokens ─────────────────────────────────────────────────
+  Los valores son "R G B" (sin rgb()) para que Tailwind pueda aplicar opacidad (bg-surface-overlay/50).
+  Oscuro = por defecto (clase .dark en <html>, o sin clase). Claro = clase .light.
+
+  Paleta base: slate de Tailwind.
+    Oscuro: fondo slate-950, tarjetas slate-900, elevado slate-800, texto slate-100.
+    Claro : fondo slate-50, tarjetas blancas, elevado slate-100, texto slate-900.
+
+  Contraste (WCAG AA, medido): texto normal >= 4,5:1 sobre cualquier superficie de su tema, incluida la
+  superficie "elevada"; bordes de controles >= 3:1 (--border-strong). Los grises 500 y 600 son el mismo valor
+  a propósito: son TEXTO y deben cumplir 4,5:1. El 700 es solo decorativo (separadores), nunca texto.
+
+  Capas:
+    1) Tokens semánticos (--bg-*, --text-*, --border-*, --accent, --chart-*): la fuente de verdad.
+    2) Alias con los nombres que usa Tailwind (--surface-*, --fg, --gray-*, --c-*): no los cambies sin
+       actualizar tailwind.config.ts.
+*/
 :root {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-/*
-  ─── Temas ─────────────────────────────────────────────────────────────────
-  Los valores son "R G B" (sin rgb()) para que Tailwind pueda aplicar opacidad.
-  Oscuro = por defecto (clase .dark en <html>, también si no hay clase). Claro = clase .light.
-  Verde/rojo financieros: en claro se oscurecen (green-600 / red-600) para mantener el contraste sobre blanco.
-*/
 :root,
 .dark {
   color-scheme: dark;
-  --surface-base: 15 17 23;
-  --surface-raised: 26 29 39;
-  --surface-overlay: 34 38 58;
-  --surface-border: 46 51 72;
-  --fg: 255 255 255;
-  --gray-200: 229 231 235;
-  --gray-300: 209 213 219;
-  --gray-400: 156 163 175;
-  --gray-500: 107 114 128;
-  --gray-600: 75 85 99;
-  --gray-700: 55 65 81;
-  --c-gain: 34 197 94;
-  --c-loss: 239 68 68;
-  --c-warning: 245 158 11;
-  --c-pledged: 168 85 247;
-  --scrollbar-thumb: #2e3348;
-  --scrollbar-thumb-hover: #3f4660;
+
+  /* Superficies */
+  --bg-primary: 2 6 23;        /* slate-950 */
+  --bg-card: 15 23 42;         /* slate-900 */
+  --bg-elevated: 30 41 59;     /* slate-800 */
+
+  /* Texto */
+  --text-main: 241 245 249;    /* slate-100 */
+  --text-secondary: 176 188 204;
+  --text-muted: 143 157 178;   /* 5,3:1 sobre slate-800 */
+
+  /* Bordes */
+  --border-subtle: 51 65 85;   /* slate-700: visible también sobre las superficies elevadas (slate-800) */
+  --border-strong: 92 106 130; /* controles: 3,3:1 sobre slate-900 */
+
+  /* Acento (foco, enlaces) */
+  --accent: 100 130 253;       /* brand-400: 5,9:1 sobre slate-950 */
+
+  /* Semánticos financieros (todos >= 5:1 sobre slate-800) */
+  --c-gain: 74 222 128;        /* green-400 */
+  --c-loss: 248 113 113;       /* red-400 */
+  --c-warning: 251 191 36;     /* amber-400 */
+  --c-pledged: 192 132 252;    /* purple-400 */
+
+  /* Gráficas (Recharts): se leen desde JS con useChartTheme */
+  --chart-1: 96 165 250;       /* blue-400 */
+  --chart-2: 45 212 191;       /* teal-400 */
+  --chart-3: 251 191 36;       /* amber-400 */
+  --chart-danger: 248 113 113; /* red-400 */
+  --chart-axis: 148 163 184;   /* slate-400 */
+  --chart-grid: 51 65 85;      /* slate-700 */
+
+  --scrollbar-thumb: #334155;
+  --scrollbar-thumb-hover: #475569;
 }
 
 .light {
   color-scheme: light;
-  --surface-base: 241 245 249;      /* slate-100 */
-  --surface-raised: 255 255 255;
-  --surface-overlay: 226 232 240;   /* slate-200 */
-  --surface-border: 203 213 225;    /* slate-300 */
-  --fg: 15 23 42;                   /* slate-900 */
-  --gray-200: 30 41 59;             /* slate-800 */
-  --gray-300: 51 65 85;             /* slate-700 */
-  --gray-400: 71 85 105;            /* slate-600 */
-  --gray-500: 100 116 139;          /* slate-500 */
-  --gray-600: 100 116 139;          /* = gray-500: el texto tenue sigue sobre 4,5:1 en blanco */
-  --gray-700: 116 130 150;          /* solo decorativo (separadores) */
-  --c-gain: 21 128 61;              /* green-700: 5,0:1 sobre blanco (green-600 solo daba 3,3:1) */
-  --c-loss: 220 38 38;              /* red-600: 4,8:1 */
-  --c-warning: 180 83 9;            /* amber-700 */
-  --c-pledged: 126 34 206;          /* purple-700 */
+
+  --bg-primary: 248 250 252;   /* slate-50 */
+  --bg-card: 255 255 255;
+  --bg-elevated: 241 245 249;  /* slate-100 */
+
+  --text-main: 15 23 42;       /* slate-900 */
+  --text-secondary: 71 85 105; /* slate-600 */
+  --text-muted: 84 98 120;     /* 5,7:1 sobre slate-100 */
+
+  --border-subtle: 226 232 240; /* slate-200 */
+  --border-strong: 125 140 160; /* controles: 3,4:1 sobre blanco */
+
+  --accent: 40 50 238;         /* brand-600: 7,5:1 sobre blanco */
+
+  --c-gain: 22 101 52;         /* green-800: sobre bg-gain/15 sigue >= 4,5:1 (green-700 daba 4,0:1) */
+  --c-loss: 185 28 28;         /* red-700: 5,9:1 sobre slate-100 (red-600 daba 4,4:1) */
+  --c-warning: 180 83 9;       /* amber-700 */
+  --c-pledged: 126 34 206;     /* purple-700 */
+
+  --chart-1: 37 99 235;        /* blue-600 */
+  --chart-2: 15 118 110;       /* teal-700 */
+  --chart-3: 217 119 6;        /* amber-600 */
+  --chart-danger: 220 38 38;   /* red-600 */
+  --chart-axis: 84 98 120;
+  --chart-grid: 203 213 225;   /* slate-300 */
+
   --scrollbar-thumb: #cbd5e1;
   --scrollbar-thumb-hover: #94a3b8;
+}
+
+/* Alias que consume tailwind.config.ts (no usar directamente en componentes nuevos). */
+:root,
+.dark,
+.light {
+  --surface-base: var(--bg-primary);
+  --surface-raised: var(--bg-card);
+  --surface-overlay: var(--bg-elevated);
+  --surface-border: var(--border-subtle);
+  --fg: var(--text-main);
+}
+
+.dark,
+:root {
+  --gray-200: 226 232 240;
+  --gray-300: 203 213 225;
+  --gray-400: 176 188 204;
+  --gray-500: 143 157 178;
+  --gray-600: 143 157 178;     /* = gray-500: es texto */
+  --gray-700: 71 85 105;       /* solo decorativo */
+}
+
+.light {
+  --gray-200: 30 41 59;
+  --gray-300: 51 65 85;
+  --gray-400: 71 85 105;
+  --gray-500: 84 98 120;
+  --gray-600: 84 98 120;       /* = gray-500: es texto */
+  --gray-700: 125 140 160;     /* solo decorativo */
 }
 
 /* Colores de acento fijos de Tailwind (etiquetas de clase de activo, avisos): más oscuros sobre fondo claro. */
 .light .text-blue-400 { color: rgb(29 78 216); }
 .light .text-teal-400 { color: rgb(15 118 110); }
-.light .text-yellow-400 { color: rgb(161 98 7); }
+.light .text-yellow-400 { color: rgb(133 77 14); } /* yellow-800: sobre bg-yellow-500/15 >= 4,5:1 */
 .light .text-orange-400 { color: rgb(194 65 12); }
 .light .text-purple-400 { color: rgb(126 34 206); }
 .light .bg-yellow-400 { background-color: rgb(202 138 4); }
@@ -80,20 +149,133 @@
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  /* Nunca scroll horizontal de página: lo que no cabe hace scroll dentro de su contenedor (tablas) */
+  overflow-x: hidden;
 }
 
-/* Cambio de tema suave solo en los colores (no afecta a animaciones de layout) */
-body,
-header,
-aside,
-main,
-table,
-section,
-div,
-button,
-input {
-  transition-property: background-color, border-color, color;
-  transition-duration: 150ms;
+body {
+  overflow-x: hidden;
+}
+
+/*
+  Transición de tema: solo mientras se cambia (applyTheme añade .theme-transition a <html> unos ms).
+  Antes se aplicaba a todos los div/button/input siempre, lo que animaba también los hover y chocaba con
+  transition-colors / transition-all de los componentes.
+*/
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, fill 150ms ease,
+    stroke 150ms ease !important;
+}
+
+/* ─── Estados interactivos consistentes ──────────────────────────────────── */
+@layer base {
+  /* Foco visible para teclado en cualquier elemento interactivo. Los componentes que ya llevan
+     focus-visible:outline-none + ring conservan solo su ring. */
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="range"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  input:disabled,
+  textarea:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Pulsación: un oscurecimiento sutil igual en todos los botones y enlaces con fondo */
+  button:not(:disabled):active,
+  a[class*="bg-"]:active {
+    filter: brightness(0.92);
+  }
+
+  /* Controles de formulario: borde con contraste >= 3:1, y hover consistente (salvo los marcados inválidos) */
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([aria-invalid="true"]),
+  select:not([aria-invalid="true"]),
+  textarea:not([aria-invalid="true"]) {
+    border-color: rgb(var(--border-strong));
+  }
+
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([aria-invalid="true"]):not(:disabled):hover,
+  select:not([aria-invalid="true"]):not(:disabled):hover,
+  textarea:not([aria-invalid="true"]):not(:disabled):hover {
+    border-color: rgb(var(--accent));
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: rgb(var(--text-muted));
+    opacity: 1;
+  }
+
+  /* Cifras alineadas en columnas: todas las tablas usan numerales tabulares */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ─── Componentes reutilizables ──────────────────────────────────────────── */
+@layer components {
+  /* Cifras financieras: ancho fijo por dígito, sin saltos al cambiar el valor */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "zero" 1;
+    white-space: nowrap;
+  }
+
+  /* Botones: base común; la variante pone color y fondo */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-brand-600 text-white hover:bg-brand-500;
+  }
+  .btn-secondary {
+    @apply border border-surface-border bg-surface-overlay text-gray-200 hover:border-gray-500 hover:text-fg;
+  }
+  .btn-ghost {
+    @apply text-gray-400 hover:bg-surface-overlay hover:text-fg;
+  }
+
+  /* Tarjeta clicable: elevación y borde de acento al pasar el ratón, hundimiento al pulsar */
+  .card-interactive {
+    @apply cursor-pointer rounded-xl border border-surface-border bg-surface-raised transition-colors duration-150 hover:border-gray-500 hover:bg-surface-overlay/50 active:bg-surface-overlay;
+  }
+
+  /* Contenedor de tabla financiera: scroll horizontal suave y cabecera legible */
+  .table-scroll {
+    @apply w-full overflow-x-auto overscroll-x-contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  /* Skeleton: se adapta al tema porque usa los tokens de superficie */
+  .skeleton {
+    @apply animate-pulse rounded-md bg-surface-overlay;
+  }
+
+  /* Tooltip de gráficas: fondo elevado translúcido con desenfoque */
+  .chart-tooltip {
+    background: rgb(var(--bg-card) / 0.82);
+    border: 1px solid rgb(var(--border-subtle));
+    color: rgb(var(--text-main));
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  }
 }
 
 /* ─── Scrollbar personalizada ────────────────────────────────────────────── */
@@ -113,6 +295,18 @@ input {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: var(--scrollbar-thumb-hover);
+}
+
+/* ─── Movimiento reducido ────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ─── Utilidades de accesibilidad ───────────────────────────────────────── */

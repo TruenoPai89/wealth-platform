@@ -62,7 +62,7 @@ export function LtvHealthBar({ position }: SlotRowProps) {
             Contrato{" "}
             <span className="font-mono text-gray-400">{pledgeContractId}</span>
           </span>
-          <span className="text-gray-600">·</span>
+          <span className="text-gray-500" aria-hidden="true">·</span>
           <span className="text-gray-500">
             Préstamo{" "}
             <span className="font-mono text-gray-400">{loanId}</span>

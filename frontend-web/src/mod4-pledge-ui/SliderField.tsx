@@ -101,11 +101,11 @@ export function SliderField({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-1.5 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between min-[420px]:gap-3">
         <label htmlFor={id} className="text-xs font-medium text-gray-400">
           {label}
         </label>
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1 self-end min-[420px]:self-auto">
           <input
             id={id}
             type="text"
@@ -120,7 +120,7 @@ export function SliderField({
             onBlur={handleBlur}
             aria-invalid={invalid}
             className={[
-              "w-28 rounded-md border bg-surface-base px-2 py-1 text-right font-mono text-sm text-fg",
+              "w-28 rounded-md border bg-surface-base px-2 py-1 text-right font-mono text-sm tabular-nums text-fg",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50",
               invalid ? "border-semantic-loss" : "border-surface-border",
             ].join(" ")}
@@ -149,7 +149,7 @@ export function SliderField({
               type="button"
               disabled={disabled}
               onClick={() => apply(q)}
-              className="rounded border border-surface-border px-2 py-0.5 text-xs text-gray-300 hover:bg-surface-overlay disabled:opacity-50"
+              className="rounded border border-surface-border px-2.5 py-1 text-xs text-gray-300 transition-colors hover:border-gray-500 hover:bg-surface-overlay hover:text-fg active:bg-surface-overlay/70 disabled:opacity-50"
             >
               {q.label}
             </button>

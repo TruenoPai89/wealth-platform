@@ -37,6 +37,13 @@ const config: Config = {
         },
         // Texto principal (blanco en oscuro, casi negro en claro). El texto sobre fondos de marca sigue siendo text-white.
         fg: withVar("--fg"),
+        // Tokens semánticos nuevos (ver globals.css): text-content-muted, text-accent, ring-accent...
+        content: {
+          main: withVar("--text-main"),
+          secondary: withVar("--text-secondary"),
+          muted: withVar("--text-muted"),
+        },
+        accent: withVar("--accent"),
         // Escala de grises de texto: se invierte en el tema claro para mantener el contraste sobre fondo blanco.
         gray: {
           200: withVar("--gray-200"),
@@ -53,6 +60,14 @@ const config: Config = {
           pledged: withVar("--c-pledged"),
           neutral: "rgb(107 114 128 / <alpha-value>)",
         },
+      },
+      borderColor: {
+        subtle: withVar("--border-subtle"),
+        strong: withVar("--border-strong"),
+      },
+      // Ancho máximo del contenido (1536 px): en pantallas ultra-wide el layout no se estira indefinidamente.
+      maxWidth: {
+        content: "96rem",
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],

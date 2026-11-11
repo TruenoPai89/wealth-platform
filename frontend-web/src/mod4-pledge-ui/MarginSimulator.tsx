@@ -92,18 +92,31 @@ export function MarginSimulator({ portfolioId = DEFAULT_PORTFOLIO_ID }: Props) {
   }, [request, config]);
 
   if (!config) {
+    if (error) {
+      return (
+        <p className="rounded-lg border border-semantic-loss/40 bg-semantic-loss/10 px-4 py-3 text-sm text-semantic-loss" role="alert">
+          {error}
+        </p>
+      );
+    }
     return (
-      <p className="text-sm text-gray-400" role="status">
-        {error ?? "Cargando la cartera del simulador…"}
-      </p>
+      <div className="flex flex-col gap-6" role="status" aria-label="Cargando la cartera del simulador">
+        <div className="skeleton h-10 w-full max-w-md" aria-hidden="true" />
+        <div className="skeleton h-72 w-full" aria-hidden="true" />
+        <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 xl:grid-cols-4" aria-hidden="true">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="skeleton h-24" />
+          ))}
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-6" data-testid="margin-simulator">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-fg">Simulador de pignoración y margin call</h2>
+          <h2 className="text-lg font-semibold text-fg sm:text-xl">Simulador de pignoración y margin call</h2>
           <p className="text-sm text-gray-400">
             Sin contrato: define la garantía y el crédito y ve el riesgo al momento (cartera {portfolioId}).
           </p>
@@ -113,7 +126,7 @@ export function MarginSimulator({ portfolioId = DEFAULT_PORTFOLIO_ID }: Props) {
           type="button"
           onClick={() => setShowReport(true)}
           disabled={!analysis || calculating}
-          className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 disabled:cursor-not-allowed disabled:opacity-50"
+          className="btn btn-primary w-full px-5 py-2.5 font-semibold shadow sm:w-auto"
           data-testid="analyze-risk-button"
         >
           ✦ Analizar Riesgo de Margin Call con IA

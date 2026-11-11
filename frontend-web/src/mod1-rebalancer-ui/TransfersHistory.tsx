@@ -101,7 +101,7 @@ export function TransfersHistory({ portfolioId }: { portfolioId: string }) {
         </div>
         <Link
           href="/"
-          className="px-4 py-2 rounded-lg text-sm font-medium bg-surface-overlay text-gray-200 hover:text-fg border border-surface-border"
+          className="btn btn-secondary"
         >
           Ir a Mis Inversiones
         </Link>
@@ -114,7 +114,17 @@ export function TransfersHistory({ portfolioId }: { portfolioId: string }) {
         </div>
       )}
 
-      {!error && transfers === null && <p className="text-gray-500 text-sm">Cargando historial...</p>}
+      {!error && transfers === null && (
+        <div className="bg-surface-raised border border-surface-border rounded-xl p-4 flex flex-col gap-3" role="status" aria-label="Cargando historial">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-4" aria-hidden="true">
+              <div className="skeleton h-4 w-24 shrink-0" />
+              <div className="skeleton h-4 flex-1" />
+              <div className="skeleton h-4 w-20 shrink-0" />
+            </div>
+          ))}
+        </div>
+      )}
 
       {!error && transfers !== null && transfers.length === 0 && (
         <div className="bg-surface-raised border border-surface-border rounded-xl py-16 flex flex-col items-center gap-2">
@@ -127,8 +137,8 @@ export function TransfersHistory({ portfolioId }: { portfolioId: string }) {
 
       {!error && transfers !== null && transfers.length > 0 && (
         <div className="bg-surface-raised border border-surface-border rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm" aria-label="Historial de transferencias">
+          <div className="table-scroll" tabIndex={0} role="region" aria-label="Historial de transferencias (desplazable horizontalmente)">
+            <table className="w-full min-w-[40rem] text-sm" aria-label="Historial de transferencias">
               <thead>
                 <tr className="border-b border-surface-border bg-surface-overlay/50">
                   {["Fecha", "Operación", "Detalle", "Importe", "Estado"].map((h, i) => (

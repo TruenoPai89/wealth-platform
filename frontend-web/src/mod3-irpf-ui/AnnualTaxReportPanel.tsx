@@ -90,7 +90,7 @@ export function AnnualTaxReportPanel({ portfolioId = "PF-001", fiscalYear = 2026
   }
 
   return (
-    <section className="mt-8 rounded-xl border border-surface-border bg-surface-raised p-6">
+    <section className="mt-8 rounded-xl border border-surface-border bg-surface-raised p-4 sm:p-6">
       <h2 className="text-lg font-semibold text-fg">Resumen fiscal de tus inversiones {fiscalYear} (borrador)</h2>
       <p className="mt-1 text-sm text-gray-400">
         Ganancias y pérdidas por venta de fondos y ETFs para la declaración de la renta. No incluye
@@ -142,7 +142,7 @@ export function AnnualTaxReportPanel({ portfolioId = "PF-001", fiscalYear = 2026
           </tbody>
         </table>
       </div>
-      <button onClick={addSale} className="mt-2 text-xs font-medium text-brand-500 hover:text-brand-400">
+      <button type="button" onClick={addSale} className="mt-2 rounded text-xs font-medium text-accent hover:underline active:opacity-80">
         + Añadir venta
       </button>
 

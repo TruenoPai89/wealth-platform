@@ -53,7 +53,7 @@ export function PledgeConfigPanel({ funds, config, onChange, disabled }: Props) 
 
   return (
     <section
-      className="rounded-xl border border-surface-border bg-surface-raised p-6"
+      className="rounded-xl border border-surface-border bg-surface-raised p-4 sm:p-6"
       aria-labelledby="pledge-config-title"
       data-testid="pledge-config-panel"
     >
@@ -64,12 +64,18 @@ export function PledgeConfigPanel({ funds, config, onChange, disabled }: Props) 
         Elige qué fondos aportas como garantía y define el crédito. El análisis se recalcula al instante.
       </p>
 
-      <div className="mt-5 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-6 sm:gap-8 xl:grid-cols-2">
         {/* ── Fondos en garantía ── */}
-        <fieldset className="flex flex-col gap-3" disabled={disabled}>
+        <fieldset className="flex min-w-0 flex-col gap-3" disabled={disabled}>
           <legend className="text-sm font-semibold text-fg">Fondos en garantía</legend>
 
-          {funds.length === 0 && <p className="text-sm text-gray-500">Cargando fondos de la cartera…</p>}
+          {funds.length === 0 && (
+            <div className="flex flex-col gap-3" role="status" aria-label="Cargando fondos de la cartera">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="skeleton h-16 w-full" aria-hidden="true" />
+              ))}
+            </div>
+          )}
 
           {funds.map((f) => {
             const amount = config.collateral[f.instrumentId];
@@ -78,7 +84,7 @@ export function PledgeConfigPanel({ funds, config, onChange, disabled }: Props) 
               <div
                 key={f.instrumentId}
                 className={[
-                  "rounded-lg border p-3 transition-colors",
+                  "rounded-lg border p-3 transition-colors hover:border-gray-500",
                   selected ? "border-brand-500/50 bg-brand-500/5" : "border-surface-border",
                 ].join(" ")}
                 data-testid={`fund-option-${f.instrumentId}`}
@@ -99,7 +105,7 @@ export function PledgeConfigPanel({ funds, config, onChange, disabled }: Props) 
                 </label>
 
                 {selected && (
-                  <div className="mt-3 pl-7">
+                  <div className="mt-3 sm:pl-7">
                     <SliderField
                       label="Importe aportado"
                       value={amount}
@@ -129,7 +135,7 @@ export function PledgeConfigPanel({ funds, config, onChange, disabled }: Props) 
         </fieldset>
 
         {/* ── Parámetros del crédito ── */}
-        <fieldset className="flex flex-col gap-5" disabled={disabled}>
+        <fieldset className="flex min-w-0 flex-col gap-5" disabled={disabled}>
           <legend className="mb-3 text-sm font-semibold text-fg">Parámetros del crédito</legend>
 
           <SliderField
