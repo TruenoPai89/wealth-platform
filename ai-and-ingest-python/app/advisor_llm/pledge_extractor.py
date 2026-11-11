@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -65,8 +66,16 @@ def _norm(s: str) -> str:
     return " ".join(s.split())
 
 
+_NUM_CLAUSULA = re.compile(r"[Cc]l[aá]usula\s+\d+\.?")
+
+
+def _sin_numeracion(cita: str) -> str:
+    """Quita 'Clausula 4.' de la cita: su numero de clausula no es un importe del contrato."""
+    return _NUM_CLAUSULA.sub(" ", cita)
+
+
 def _numero_en_cita(valor: float, cita: str) -> bool:
-    numeros = cifras_en_texto(cita)
+    numeros = cifras_en_texto(_sin_numeracion(cita))
     if not numeros:  # numero escrito con letra ("cinco dias"): no se puede comprobar, se acepta
         return True
     return any(abs(valor - n) < 0.01 for n in numeros)
@@ -76,7 +85,7 @@ def _problema_haircut(h) -> str | None:
     """El haircut debe salir de la cita: 'aforo del 70 %' -> 0,30; 'descuento del 10 %' -> 0,10;
     'valor integro' -> 0."""
     cita = _norm(h.cita).lower().replace("í", "i")
-    numeros = [n / 100 for n in cifras_en_texto(h.cita)]
+    numeros = [n / 100 for n in cifras_en_texto(_sin_numeracion(h.cita))]
     if "integro" in cita:
         validos = [0.0]
     elif "aforo" in cita:

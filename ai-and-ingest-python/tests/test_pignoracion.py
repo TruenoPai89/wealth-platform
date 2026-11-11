@@ -338,3 +338,27 @@ def test_cita_con_numero_en_letra_no_se_rechaza():
     resultado = extraer_terminos(texto, llamar=lambda t, a: copy.deepcopy(variante),
                                  usar_cache=False)
     assert resultado["terminos"]["plazo_reposicion_dias_habiles"] == 5
+
+
+def test_numero_de_clausula_no_cuenta_como_importe():
+    # La cita incluye "Clausula 4." y el valor es setenta por ciento: no debe rechazarse por el 4.
+    variante = copy.deepcopy(CORRECTO)
+    variante["cita_ltv_maximo"] = (
+        "Clausula 4. Limite. El saldo dispuesto no podra superar el setenta por ciento del "
+        "Valor de Garantia."
+    )
+    texto = TEXTO.replace(
+        "no podra superar el 70 % del", "no podra superar el setenta por ciento del")
+    resultado = extraer_terminos(texto, llamar=lambda t, a: copy.deepcopy(variante),
+                                 usar_cache=False)
+    assert resultado["terminos"]["ltv_maximo"] == 0.70
+
+
+def test_numero_de_clausula_no_valida_un_plazo_falso():
+    # "Clausula 5." no debe hacer pasar por bueno un plazo de 5 cuando el contrato dice 3.
+    malo = copy.deepcopy(CORRECTO)
+    malo["plazo_reposicion_dias_habiles"] = 5
+    malo["cita_plazo"] = "Clausula 5. Margen. dispondra de tres dias habiles"
+    texto = TEXTO.replace("5 dias habiles", "tres dias habiles")
+    with pytest.raises(ExtraccionFallida):
+        extraer_terminos(texto, llamar=lambda t, a: copy.deepcopy(malo), usar_cache=False)
