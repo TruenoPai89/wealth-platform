@@ -62,3 +62,27 @@ def test_plantilla_pasa_su_propia_verificacion():
 def test_plantilla_regla_dos_meses():
     d = dict(DATOS, twoMonthRuleViolation=True, taxDelta=0.0)
     assert "2 meses" in explicacion_plantilla(d)
+
+
+# ---- Auditoria: huecos del verificador ya cerrados ----
+DATOS_AUDIT = {"ganancias": 27400, "cuota": 4722.60, "tipos": [0.19, 0.21]}
+
+
+def test_decimal_cercano_ya_no_se_acepta():
+    assert cifras_no_respaldadas("El tipo es del 19,4 %.", DATOS_AUDIT) == [19.4]
+
+
+def test_redondeo_legitimo_se_acepta():
+    assert cifras_no_respaldadas("Pagaras 4.723 EUR, un 19 %.", DATOS_AUDIT) == []
+    assert cifras_no_respaldadas("Pagaras 4.722,60 EUR.", DATOS_AUDIT) == []
+
+
+def test_cifra_en_letra_se_rechaza():
+    assert cifras_no_respaldadas("Pagaras cinco mil euros.", DATOS_AUDIT) != []
+    assert cifras_no_respaldadas("Regla de los dos meses, una perdida.", DATOS_AUDIT) == []
+
+
+def test_limite_conocido_intercambio_de_magnitudes():
+    # LIMITE DOCUMENTADO: el verificador comprueba que la cifra existe en el motor, no que se
+    # atribuya a la magnitud correcta. Si algun dia se cierra, este test debe cambiar.
+    assert cifras_no_respaldadas("Tu cuota es de 27.400 EUR.", DATOS_AUDIT) == []
