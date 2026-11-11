@@ -326,3 +326,15 @@ def test_plantilla_verificada():
     assert cifras_no_respaldadas(texto, ESTADO) == []
     assert "2.936,25 EUR" in texto
     assert "73,31 %" in texto
+
+
+def test_cita_con_numero_en_letra_no_se_rechaza():
+    # Un contrato que escribe "cinco dias" y "setenta por ciento" no debe dar un falso rechazo.
+    variante = copy.deepcopy(CORRECTO)
+    variante["cita_plazo"] = "dispondra de cinco dias habiles"
+    variante["cita_ltv_maximo"] = "El saldo dispuesto no podra superar el setenta por ciento"
+    texto = TEXTO.replace("5 dias habiles", "cinco dias habiles").replace(
+        "el 70 % del\nValor de Garantia", "el setenta por ciento del\nValor de Garantia")
+    resultado = extraer_terminos(texto, llamar=lambda t, a: copy.deepcopy(variante),
+                                 usar_cache=False)
+    assert resultado["terminos"]["plazo_reposicion_dias_habiles"] == 5

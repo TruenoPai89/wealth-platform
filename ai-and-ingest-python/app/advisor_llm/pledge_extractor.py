@@ -66,7 +66,10 @@ def _norm(s: str) -> str:
 
 
 def _numero_en_cita(valor: float, cita: str) -> bool:
-    return any(abs(valor - n) < 0.01 for n in cifras_en_texto(cita))
+    numeros = cifras_en_texto(cita)
+    if not numeros:  # numero escrito con letra ("cinco dias"): no se puede comprobar, se acepta
+        return True
+    return any(abs(valor - n) < 0.01 for n in numeros)
 
 
 def _problema_haircut(h) -> str | None:
@@ -82,6 +85,8 @@ def _problema_haircut(h) -> str | None:
         validos = numeros
     else:
         return None  # sin palabra clave no se puede decidir
+    if not numeros:
+        return None  # la cita escribe el numero con letra: no se puede comprobar
     if any(abs(h.haircut - v) < 0.0001 for v in validos):
         return None
     return (f"haircut de {h.clase.value}={h.haircut} no sale de su cita "
