@@ -22,7 +22,7 @@ const AI_BASE_URL =
 /**
  * Realiza peticiones al servicio Python y gestiona sus errores.
  */
-async function aiRequest<T>(
+export async function aiRequest<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {

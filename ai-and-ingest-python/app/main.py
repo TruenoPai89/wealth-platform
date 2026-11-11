@@ -19,6 +19,7 @@ from pydantic import BaseModel  # noqa: E402
 
 from app.advisor_llm.claude_engine import explicar_venta  # noqa: E402
 from app.advisor_llm.pledge_explainer import explicar_estado  # noqa: E402
+from app.advisor_llm.margin_explainer import explicar_margen  # noqa: E402
 from app.advisor_llm.resumen_engine import explicar_resumen  # noqa: E402
 from app.advisor_llm.pledge_extractor import (  # noqa: E402
     ExtraccionFallida,
@@ -106,3 +107,10 @@ def explain_pledge_status(datos: dict) -> dict:
     """Recibe el estado LTV del backend Java y genera una explicacion."""
 
     return explicar_estado(datos)
+
+
+@app.post("/explain/margin-analysis")
+def explain_margin_analysis(datos: dict) -> dict:
+    """Recibe el campo `data` de POST /api/v1/margin/analyze (backend Java) y lo explica."""
+
+    return explicar_margen(datos)

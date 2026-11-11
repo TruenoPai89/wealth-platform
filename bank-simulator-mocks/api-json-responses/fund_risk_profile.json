@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "source": "ASSUMPTIONS_MOCK",
+  "notice": "Volatilidades anuales y correlaciones ILUSTRATIVAS por fondo. No se han estimado con series historicas de precios (el simulador no las tiene). Sustituir por datos reales del proveedor de mercado antes de usarlas con clientes.",
+  "funds": {
+    "IE00B4L5Y983": { "name": "iShares Core MSCI World", "annualVolatility": 0.15 },
+    "IE00B3XXRP09": { "name": "Vanguard S&P 500", "annualVolatility": 0.16 },
+    "IE00B4WXJJ64": { "name": "iShares Core Euro Govt Bond", "annualVolatility": 0.055 },
+    "IE00B579F325": { "name": "Invesco Physical Gold", "annualVolatility": 0.15 }
+  },
+  "correlations": [
+    { "a": "IE00B4L5Y983", "b": "IE00B3XXRP09", "rho": 0.95 },
+    { "a": "IE00B4L5Y983", "b": "IE00B4WXJJ64", "rho": 0.10 },
+    { "a": "IE00B4L5Y983", "b": "IE00B579F325", "rho": 0.05 },
+    { "a": "IE00B3XXRP09", "b": "IE00B4WXJJ64", "rho": 0.05 },
+    { "a": "IE00B3XXRP09", "b": "IE00B579F325", "rho": 0.05 },
+    { "a": "IE00B4WXJJ64", "b": "IE00B579F325", "rho": 0.15 }
+  ]
+}
