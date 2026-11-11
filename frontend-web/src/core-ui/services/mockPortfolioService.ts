@@ -16,7 +16,7 @@
  */
 
 import type { RebalancePlan } from "@/core-ui/types/portfolio";
-import rebalancePlanRaw from "../../../../bank-simulator-mocks/api-json-responses/custody_positions.json";
+import rebalancePlanRaw from "@/core-ui/mocks/custody_positions.json";
 
 /**
  * Simula GET /api/v1/portfolios/{portfolioId}/rebalance
