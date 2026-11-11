@@ -93,8 +93,25 @@ def _coincide(c: float, decimales: int, permitidas: set[float]) -> bool:
     return any(abs(c - o) <= tol for o in permitidas)
 
 
+# Valor de cada numero escrito con letra (solo los que puede escribir un contrato o un resumen).
+_VALOR_PALABRA = {
+    "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7, "ocho": 8,
+    "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13, "catorce": 14, "quince": 15,
+    "veinte": 20, "treinta": 30, "cuarenta": 40, "cincuenta": 50, "sesenta": 60,
+    "setenta": 70, "ochenta": 80, "noventa": 90, "cien": 100,
+}
+
+
 def cifras_no_respaldadas(texto: str, datos) -> list:
-    """Cifras (y numeros en letra) del texto que no salen de los datos. Vacia = texto verificado."""
+    """Cifras del texto que no salen de los datos (en digitos o en letra). Vacia = verificado.
+
+    Un numero en letra solo se rechaza si su valor no esta en el JSON: 'cinco dias' con un
+    plazo de 5 en el motor pasa; 'cinco dias' sin ningun 5 en el motor, no.
+    """
     permitidas = cifras_permitidas(datos)
     malas: list = [v for v, d in _tokens(texto) if not _coincide(v, d, permitidas)]
-    return malas + palabras_numericas(texto)
+    for palabra in palabras_numericas(texto):
+        valor = _VALOR_PALABRA.get(_sin_tildes(palabra).lower())
+        if valor is None or not _coincide(float(valor), 0, permitidas):
+            malas.append(palabra)
+    return malas

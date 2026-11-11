@@ -82,6 +82,12 @@ def test_cifra_en_letra_se_rechaza():
     assert cifras_no_respaldadas("Regla de los dos meses, una perdida.", DATOS_AUDIT) == []
 
 
+def test_numero_en_letra_que_si_esta_en_el_json_pasa():
+    datos = {"plazo_dias": 5, "tipo": 0.19}
+    assert cifras_no_respaldadas("Dispones de cinco dias habiles, un 19 %.", datos) == []
+    assert cifras_no_respaldadas("Dispones de siete dias habiles.", datos) != []
+
+
 def test_limite_conocido_intercambio_de_magnitudes():
     # LIMITE DOCUMENTADO: el verificador comprueba que la cifra existe en el motor, no que se
     # atribuya a la magnitud correcta. Si algun dia se cierra, este test debe cambiar.
