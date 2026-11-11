@@ -269,10 +269,10 @@ function TableHeader({ plan }: { plan: RebalancePlan }) {
   };
 
   return (
-    <div className="flex flex-col gap-4 mb-6">
+    <div className="mb-6 flex flex-col gap-4">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-fg">Posiciones de Cartera</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-fg">Posiciones de Cartera</h2>
           <p className="text-sm text-gray-500 mt-0.5">
             Portfolio{" "}
             <span className="font-mono text-gray-400">{plan.portfolioId}</span>
@@ -335,11 +335,15 @@ function KpiCard({ label, value, sub, accent }: {
 }) {
   const c = { gain: "text-semantic-gain", loss: "text-semantic-loss", warning: "text-semantic-warning", neutral: "text-fg" }[accent];
   return (
-    <div className="min-w-0 bg-surface-raised border border-surface-border rounded-lg px-4 py-3">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
+    <div className="min-w-0 rounded-lg border border-slate-200/80 bg-surface-raised px-4 py-3 shadow-sm transition-shadow hover:shadow dark:border-slate-800">
+      <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</p>
       {/* num = cifras tabulares sin salto de línea; truncate evita que un importe largo ensanche la tarjeta */}
-      <p className={`text-base font-semibold font-mono num truncate ${c}`} title={value}>{value}</p>
-      {sub && <p className={`text-xs mt-0.5 num truncate ${c}`}>{sub}</p>}
+      <p className={`truncate font-mono text-2xl font-bold tracking-tight tabular-nums num ${c}`} title={value}>{value}</p>
+      {sub && (
+        <p className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${accent === "gain" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400" : accent === "loss" ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400" : accent === "warning" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
+          {sub}
+        </p>
+      )}
     </div>
   );
 }
@@ -348,9 +352,9 @@ function KpiCard({ label, value, sub, accent }: {
 
 function CashFlowPanel({ cashFlow }: { cashFlow: CashFlowSummary }) {
   return (
-    <div className="bg-surface-raised border border-surface-border rounded-xl px-4 sm:px-5 py-4 mt-4">
+    <div className="mt-4 rounded-xl border border-slate-200/80 bg-surface-raised px-4 py-4 shadow-sm sm:px-5 dark:border-slate-800">
       <h3 className="text-sm font-semibold text-gray-400 mb-3">Flujo de Caja del Rebalanceo</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap gap-x-6 gap-y-3 text-sm num">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm num sm:grid-cols-3 lg:flex lg:flex-wrap tabular-nums">
         <div>
           <p className="text-xs text-gray-600">Efectivo inicial</p>
           <p className="font-mono text-fg">{fmtEur(cashFlow.cashBefore)}</p>

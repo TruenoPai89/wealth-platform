@@ -55,6 +55,7 @@ export function ContributionModal({
   onExecuted,
 }: ContributionModalProps) {
   const [raw, setRaw] = useState(defaultAmount);
+  const [mode, setMode] = useState<"invest" | "rebalance">("invest");
   const [plan, setPlan] = useState<ContributionPlan | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +63,14 @@ export function ContributionModal({
 
   const amount = parseAmount(raw);
   const amountInvalid = raw.trim() !== "" && amount === null;
+
+  function changeMode(nextMode: "invest" | "rebalance") {
+    if (nextMode !== mode) {
+      setMode(nextMode);
+      setPlan(null);
+      setError(null);
+    }
+  }
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -115,13 +124,17 @@ export function ContributionModal({
             Invertir en {basket.name}
           </h2>
           <p className="text-sm text-gray-500 mt-0.5">{basket.description}</p>
+          <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg border border-surface-border bg-surface-overlay p-1" role="group" aria-label="Modo de operación">
+            <button type="button" onClick={() => changeMode("invest")} className={`rounded-md px-3 py-2 text-xs ${mode === "invest" ? "bg-surface-raised text-fg shadow-sm" : "text-gray-500"}`} aria-pressed={mode === "invest"}>Invertir una cantidad</button>
+            <button type="button" onClick={() => changeMode("rebalance")} className={`rounded-md px-3 py-2 text-xs ${mode === "rebalance" ? "bg-surface-raised text-fg shadow-sm" : "text-gray-500"}`} aria-pressed={mode === "rebalance"}>Rebalancear agrupación</button>
+          </div>
         </div>
 
         {/* ── Paso 1: importe ── */}
         {plan === null && (
           <div className="px-5 pb-2 flex flex-col gap-3">
             <label className="flex flex-col gap-1.5" htmlFor="contribution-amount">
-              <span className="text-sm text-gray-400">Importe a ingresar</span>
+              <span className="text-sm text-gray-400">{mode === "invest" ? "Importe a ingresar" : "Capital a redistribuir"}</span>
               <span className="flex items-center gap-2">
                 <input
                   id="contribution-amount"
@@ -149,7 +162,9 @@ export function ContributionModal({
               {amountInvalid
                 ? "Importe no válido: usa números positivos con hasta 2 decimales (p. ej. 5.000 o 2500,50)."
                 : amount !== null
-                  ? `Se ingresarán ${formatEur(amount)} y se repartirán entre los fondos de la agrupación.`
+                  ? mode === "invest"
+                    ? `Se ingresarán ${formatEur(amount)} y se repartirán entre los fondos de la agrupación.`
+                    : `Se redistribuirán ${formatEur(amount)} para acercar cada fondo a su peso objetivo.`
                   : "Escribe el importe que quieres ingresar."}
             </p>
 
@@ -170,10 +185,10 @@ export function ContributionModal({
           <div className="px-5 pb-2 flex flex-col gap-3" data-testid="contribution-preview">
             <div className="rounded-lg border border-brand-500/40 bg-brand-500/10 px-4 py-3">
               <p className="text-sm font-semibold text-fg" data-testid="contribution-question">
-                ¿Deseas rebalancear con esta nueva aportación de caja?
+                {mode === "invest" ? "¿Deseas invertir esta cantidad en la agrupación?" : "¿Deseas rebalancear la agrupación?"}
               </p>
               <p className="text-sm text-gray-400 mt-0.5">
-                Se ingresarán <span className="font-mono text-fg">{formatEur(plan.amount)}</span> y se invertirán{" "}
+                {mode === "invest" ? "Se ingresarán" : "Se redistribuirán"} <span className="font-mono text-fg">{formatEur(plan.amount)}</span> y se invertirán{" "}
                 <span className="font-mono text-fg">{formatEur(plan.invested)}</span> comprando{" "}
                 {plan.orders.length} {plan.orders.length === 1 ? "fondo" : "fondos"} para acercar la agrupación a sus
                 pesos objetivo.
@@ -284,7 +299,7 @@ export function ContributionModal({
                 disabled={busy}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {busy ? "Invirtiendo..." : "Sí, rebalancear e invertir"}
+                {busy ? "Procesando..." : mode === "invest" ? "Sí, invertir" : "Sí, rebalancear"}
               </button>
             </>
           )}
