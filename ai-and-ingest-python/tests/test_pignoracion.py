@@ -248,19 +248,27 @@ def test_clase_repetida_se_rechaza():
         )
 
 
-def test_confundir_aforo_con_descuento_lo_detecta_la_evaluacion():
-    # La cita es literal, pero el haircut es incorrecto.
+def test_confundir_aforo_con_descuento_lo_rechaza_el_extractor():
+    # La cita es literal, pero el haircut (0,70) no sale de "aforo del 70 %" (seria 0,30).
     malo = copy.deepcopy(CORRECTO)
     malo["haircuts"][0]["haircut"] = 0.70
 
-    resultado = extraer_terminos(
-        TEXTO,
-        llamar=lambda texto, aviso: copy.deepcopy(malo),
-    )
+    with pytest.raises(ExtraccionFallida) as e:
+        extraer_terminos(TEXTO, llamar=lambda texto, aviso: copy.deepcopy(malo))
 
-    errores = comparar(resultado["terminos"], ESPERADO)
+    assert any("EQUITY" in p for p in e.value.problemas)
 
-    assert any("EQUITY" in error for error in errores)
+
+def test_valor_que_no_coincide_con_su_cita_se_rechaza():
+    # Cita literal del 70 %, pero ltv_maximo = 0,80.
+    malo = copy.deepcopy(CORRECTO)
+    malo["ltv_maximo"] = 0.80
+
+    with pytest.raises(ExtraccionFallida) as e:
+        extraer_terminos(TEXTO, llamar=lambda texto, aviso: copy.deepcopy(malo))
+
+    assert any("ltv_maximo" in p for p in e.value.problemas)
+
 
 
 def test_contrato_vacio():
@@ -318,3 +326,49 @@ def test_plantilla_verificada():
     assert cifras_no_respaldadas(texto, ESTADO) == []
     assert "2.936,25 EUR" in texto
     assert "73,31 %" in texto
+
+
+def test_cita_con_numero_en_letra_no_se_rechaza():
+    # Un contrato que escribe "cinco dias" y "setenta por ciento" no debe dar un falso rechazo.
+    variante = copy.deepcopy(CORRECTO)
+    variante["cita_plazo"] = "dispondra de cinco dias habiles"
+    variante["cita_ltv_maximo"] = "El saldo dispuesto no podra superar el setenta por ciento"
+    texto = TEXTO.replace("5 dias habiles", "cinco dias habiles").replace(
+        "el 70 % del\nValor de Garantia", "el setenta por ciento del\nValor de Garantia")
+    resultado = extraer_terminos(texto, llamar=lambda t, a: copy.deepcopy(variante),
+                                 usar_cache=False)
+    assert resultado["terminos"]["plazo_reposicion_dias_habiles"] == 5
+
+
+def test_numero_de_clausula_no_cuenta_como_importe():
+    # La cita incluye "Clausula 4." y el valor es setenta por ciento: no debe rechazarse por el 4.
+    variante = copy.deepcopy(CORRECTO)
+    variante["cita_ltv_maximo"] = (
+        "Clausula 4. Limite. El saldo dispuesto no podra superar el setenta por ciento del "
+        "Valor de Garantia."
+    )
+    texto = TEXTO.replace(
+        "no podra superar el 70 % del", "no podra superar el setenta por ciento del")
+    resultado = extraer_terminos(texto, llamar=lambda t, a: copy.deepcopy(variante),
+                                 usar_cache=False)
+    assert resultado["terminos"]["ltv_maximo"] == 0.70
+
+
+def test_numero_de_clausula_no_valida_un_plazo_falso():
+    # "Clausula 5." no debe hacer pasar por bueno un plazo de 5 cuando el contrato dice 3.
+    malo = copy.deepcopy(CORRECTO)
+    malo["plazo_reposicion_dias_habiles"] = 5
+    malo["cita_plazo"] = "Clausula 5. Margen. dispondra de tres dias habiles"
+    texto = TEXTO.replace("5 dias habiles", "tres dias habiles")
+    with pytest.raises(ExtraccionFallida):
+        extraer_terminos(texto, llamar=lambda t, a: copy.deepcopy(malo), usar_cache=False)
+
+
+def test_cita_mezcla_digitos_y_letra():
+    # Como en el contrato real: "el 80 %" en digitos y "cinco dias" en letra. El 5 debe contar.
+    texto = TEXTO.replace("5 dias habiles", "cinco dias habiles")
+    variante = copy.deepcopy(CORRECTO)
+    variante["cita_plazo"] = "dispondra de cinco dias habiles"
+    resultado = extraer_terminos(texto, llamar=lambda t, a: copy.deepcopy(variante),
+                                 usar_cache=False)
+    assert resultado["terminos"]["plazo_reposicion_dias_habiles"] == 5

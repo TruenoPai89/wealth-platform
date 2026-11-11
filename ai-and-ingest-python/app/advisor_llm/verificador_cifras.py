@@ -21,8 +21,36 @@ def _a_float(token: str) -> float:
     return float(token.replace(",", "."))
 
 
+def _tokens(texto: str) -> list[tuple[float, int]]:
+    """(valor, decimales escritos) de cada cifra del texto, sin los ISIN."""
+    salida = []
+    for t in _NUM.findall(_ISIN.sub(" ", texto)):
+        decimales = len(t.split(",")[1]) if "," in t else (
+            len(t.split(".")[1]) if "." in t and not re.fullmatch(r"\d{1,3}(?:\.\d{3})+", t) else 0)
+        salida.append((_a_float(t), decimales))
+    return salida
+
+
 def cifras_en_texto(texto: str) -> list[float]:
-    return [_a_float(t) for t in _NUM.findall(_ISIN.sub(" ", texto))]
+    return [v for v, _ in _tokens(texto)]
+
+
+# Numeros escritos con letra: no los ve el detector de digitos ("cinco mil euros"). Se rechazan
+# todos salvo uno/una (articulos) y dos (la regla de los 2 meses).
+_PALABRAS_NUM = re.compile(
+    r"\b(tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|trece|catorce|quince|"
+    r"dieciseis|diecisiete|dieciocho|diecinueve|veinte|veinti\w+|treinta|cuarenta|cincuenta|"
+    r"sesenta|setenta|ochenta|noventa|cien|ciento|cientos|doscientos|trescientos|"
+    r"cuatrocientos|quinientos|seiscientos|setecientos|ochocientos|novecientos|mil|"
+    r"millon|millones)\b", re.IGNORECASE)
+
+
+def _sin_tildes(s: str) -> str:
+    return s.translate(str.maketrans("áéíóúÁÉÍÓÚ", "aeiouAEIOU"))
+
+
+def palabras_numericas(texto: str) -> list[str]:
+    return _PALABRAS_NUM.findall(_sin_tildes(texto))
 
 
 def cifras_permitidas(datos) -> set[float]:
@@ -58,13 +86,32 @@ def cifras_permitidas(datos) -> set[float]:
     return salida | _CONSTANTES
 
 
-def _coincide(c: float, permitidas: set[float]) -> bool:
-    # Tolerancia de redondeo: 1.140 por 1.140,00, 73,3 % por 73,31 %. Relativa muy pequena (0,1 %)
-    # para que en importes grandes no se acepten cifras distintas.
-    return any(abs(c - o) <= max(0.51, 0.001 * abs(o)) for o in permitidas)
+def _coincide(c: float, decimales: int, permitidas: set[float]) -> bool:
+    # Tolerancia = media unidad del ultimo decimal ESCRITO: "1.140" vale por 1.140,00 o 1.140,40,
+    # "73,3" por 73,31, pero "19,4" ya no vale por 19 (antes, 0,51 fijo lo aceptaba).
+    tol = 0.5 * 10 ** (-decimales) + 1e-6
+    return any(abs(c - o) <= tol for o in permitidas)
 
 
-def cifras_no_respaldadas(texto: str, datos) -> list[float]:
-    """Cifras del texto que no aparecen en los datos. Lista vacia = texto verificado."""
+# Valor de cada numero escrito con letra (solo los que puede escribir un contrato o un resumen).
+_VALOR_PALABRA = {
+    "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7, "ocho": 8,
+    "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13, "catorce": 14, "quince": 15,
+    "veinte": 20, "treinta": 30, "cuarenta": 40, "cincuenta": 50, "sesenta": 60,
+    "setenta": 70, "ochenta": 80, "noventa": 90, "cien": 100,
+}
+
+
+def cifras_no_respaldadas(texto: str, datos) -> list:
+    """Cifras del texto que no salen de los datos (en digitos o en letra). Vacia = verificado.
+
+    Un numero en letra solo se rechaza si su valor no esta en el JSON: 'cinco dias' con un
+    plazo de 5 en el motor pasa; 'cinco dias' sin ningun 5 en el motor, no.
+    """
     permitidas = cifras_permitidas(datos)
-    return [c for c in cifras_en_texto(texto) if not _coincide(c, permitidas)]
+    malas: list = [v for v, d in _tokens(texto) if not _coincide(v, d, permitidas)]
+    for palabra in palabras_numericas(texto):
+        valor = _VALOR_PALABRA.get(_sin_tildes(palabra).lower())
+        if valor is None or not _coincide(float(valor), 0, permitidas):
+            malas.append(palabra)
+    return malas

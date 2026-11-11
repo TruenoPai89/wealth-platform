@@ -14,9 +14,12 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 
 from pydantic import ValidationError
+
+from app.advisor_llm.verificador_cifras import _sin_tildes, cifras_en_texto
 
 from app.advisor_llm.pledge_terms import (
     HERRAMIENTA,
@@ -63,6 +66,59 @@ def _norm(s: str) -> str:
     return " ".join(s.split())
 
 
+_NUM_CLAUSULA = re.compile(r"[Cc]l[aá]usula\s+\d+\.?")
+
+
+def _sin_numeracion(cita: str) -> str:
+    """Quita 'Clausula 4.' de la cita: su numero de clausula no es un importe del contrato."""
+    return _NUM_CLAUSULA.sub(" ", cita)
+
+
+# Numeros escritos con letra y su valor. "uno/una" se omiten (son articulos) y "ciento" solo
+# aparece en "por ciento", asi que tampoco entra.
+_PALABRAS_NUM = {
+    "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7, "ocho": 8,
+    "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13, "catorce": 14, "quince": 15,
+    "veinte": 20, "treinta": 30, "cuarenta": 40, "cincuenta": 50, "sesenta": 60,
+    "setenta": 70, "ochenta": 80, "noventa": 90, "cien": 100,
+}
+
+
+def _numeros_en_cita(cita: str) -> list[float]:
+    """Cifras en digitos y en letra de una cita, sin la numeracion de clausula."""
+    texto = _sin_numeracion(cita)
+    palabras = re.findall(r"[a-z]+", _sin_tildes(texto).lower())
+    return cifras_en_texto(texto) + [float(_PALABRAS_NUM[w]) for w in palabras if w in _PALABRAS_NUM]
+
+
+def _numero_en_cita(valor: float, cita: str) -> bool:
+    numeros = _numeros_en_cita(cita)
+    if not numeros:  # ninguna cifra que comparar: no se puede comprobar, se acepta
+        return True
+    return any(abs(valor - n) < 0.01 for n in numeros)
+
+
+def _problema_haircut(h) -> str | None:
+    """El haircut debe salir de la cita: 'aforo del 70 %' -> 0,30; 'descuento del 10 %' -> 0,10;
+    'valor integro' -> 0."""
+    cita = _norm(h.cita).lower().replace("í", "i")
+    numeros = [n / 100 for n in _numeros_en_cita(h.cita)]
+    if "integro" in cita:
+        validos = [0.0]
+    elif "aforo" in cita:
+        validos = [round(1 - n, 4) for n in numeros]
+    elif "descuento" in cita:
+        validos = numeros
+    else:
+        return None  # sin palabra clave no se puede decidir
+    if not numeros:
+        return None  # la cita escribe el numero con letra: no se puede comprobar
+    if any(abs(h.haircut - v) < 0.0001 for v in validos):
+        return None
+    return (f"haircut de {h.clase.value}={h.haircut} no sale de su cita "
+            f"(esperado {sorted(set(validos))}): {h.cita!r}")
+
+
 def problemas_de(
     texto: str,
     t: TerminosPignoracion,
@@ -92,6 +148,23 @@ def problemas_de(
                 f"La cita de {h.clase.value} no aparece literalmente: "
                 f"{h.cita!r}"
             )
+
+    # Comprobar que cada VALOR coincide con el numero de SU cita (la cita puede ser literal y el
+    # valor estar mal: p. ej. cita "70 %" con ltv_maximo = 0.80).
+    for nombre, valor, cita, factor in (
+        ("ltv_maximo", t.ltv_maximo, t.cita_ltv_maximo, 100),
+        ("ltv_margin_call", t.ltv_margin_call, t.cita_margin_call, 100),
+        ("plazo_reposicion_dias_habiles", t.plazo_reposicion_dias_habiles, t.cita_plazo, 1),
+    ):
+        if valor is not None and cita and not _numero_en_cita(valor * factor, cita):
+            problemas.append(
+                f"{nombre}={valor} no coincide con ningun numero de su cita: {cita!r}"
+            )
+
+    for h in t.haircuts:
+        problema = _problema_haircut(h)
+        if problema:
+            problemas.append(problema)
 
     # Comprobar la coherencia entre los dos umbrales.
     if (
