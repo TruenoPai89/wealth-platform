@@ -142,19 +142,19 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
   }, [plan, viewMode, enrichedPositions]);
 
   async function handleRebalance() {
-    if (USE_MOCK) {
-      await refetch();
-      return;
-    }
     setShowOrders(true);
     setLastExecution(null);
-    setViewMode("projected"); // al rebalancear se ve ya cómo quedan los pesos frente a la meta
+    setViewMode("projected");
     await refetch();
-    setPreviewOpen(true); // pide confirmación (solo se pinta si el plan trae órdenes)
+    if (!USE_MOCK) {
+      setPreviewOpen(true); // pide confirmación real (solo con backend)
+    }
   }
 
   async function handleSaveTargets(weights: Record<string, number>) {
-    await updateTargets(portfolioId, weights); // lanza si el backend rechaza la meta
+    if (!USE_MOCK) {
+      await updateTargets(portfolioId, weights); // lanza si el backend rechaza la meta
+    }
     setEditingTargets(false);
     setShowOrders(true);
     setLastExecution(null);
@@ -209,7 +209,7 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
             <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" aria-hidden="true" />
             {USE_MOCK ? "Datos simulados (mock)" : "Backend en vivo"}
           </span>
-          {plan && !USE_MOCK && (
+          {plan && (
             <button
               type="button"
               onClick={() => setEditingTargets((v) => !v)}
@@ -226,13 +226,13 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
             className={`${BUTTON_BASE} bg-brand-600 text-white hover:bg-brand-500`}
           >
             <RefreshIcon spinning={isLoading} />
-            {isLoading ? "Cargando..." : USE_MOCK ? "Actualizar" : "Rebalancear"}
+            {isLoading ? "Cargando..." : "Rebalancear"}
           </button>
         </div>
       </div>
 
       {/* Editor de la meta de balanceo (el cliente fija el % objetivo de cada activo) */}
-      {plan && !USE_MOCK && editingTargets && (
+      {plan && editingTargets && (
         <TargetWeightsEditor
           positions={plan.positions}
           onSave={handleSaveTargets}
@@ -283,9 +283,9 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
       )}
 
       {/* Órdenes de compra/venta resultantes del rebalanceo */}
-      {plan && !USE_MOCK && showOrders && !error && <RebalanceOrdersPanel plan={plan} />}
+      {plan && showOrders && !error && <RebalanceOrdersPanel plan={plan} />}
 
-      {/* Confirmación. Sin órdenes (ya está en su meta, p. ej. tras ejecutar) no se abre: evita un modal vacío. */}
+      {/* Confirmación. Solo con backend real: en mock no hay ejecución. */}
       {plan && !USE_MOCK && previewOpen && !error && !isLoading && plan.orders.length > 0 && (
         <OrderPreviewModal
           plan={plan}
@@ -297,7 +297,7 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
       )}
 
       {/* Alterna entre la cartera actual y la proyectada tras ejecutar las órdenes */}
-      {plan && !USE_MOCK && showOrders && !error && (
+      {plan && showOrders && !error && (
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <PortfolioViewToggle mode={viewMode} onChange={setViewMode} />
           <p className="text-sm text-gray-500" data-testid="view-caption">

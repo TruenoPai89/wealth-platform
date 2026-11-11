@@ -1,0 +1,28 @@
+{
+  "fiscalYear": 2026,
+  "isin": "IE00B4L5Y983",
+  "quantity": 100,
+  "salePrice": 80,
+  "saleGainLoss": 1870.00,
+  "affectedLots": 1,
+  "twoMonthRuleViolation": false,
+  "computableSaleResult": 1870.00,
+  "before": {
+    "netBalance": 10000.00,
+    "carryForwardUsed": 0.00,
+    "taxableBase": 10000.00,
+    "tax": 1980.00,
+    "averageRate": 19.80,
+    "remainingCarryForward": []
+  },
+  "after": {
+    "netBalance": 11870.00,
+    "carryForwardUsed": 0.00,
+    "taxableBase": 11870.00,
+    "tax": 2345.30,
+    "averageRate": 19.76,
+    "remainingCarryForward": []
+  },
+  "taxDelta": 365.30,
+  "warning": null
+}

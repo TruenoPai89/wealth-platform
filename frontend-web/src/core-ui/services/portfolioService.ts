@@ -19,6 +19,7 @@ import type {
   ContributionExecution,
   ContributionPlan,
 } from "@/core-ui/types/baskets";
+import transfersMockData from "@/core-ui/mocks/transfers_mock.json";
 
 export const USE_MOCK = process.env["NEXT_PUBLIC_USE_MOCK"] === "true";
 
@@ -88,6 +89,9 @@ export function executeRebalance(portfolioId: string): Promise<RebalanceExecutio
 
 /** Historial de movimientos de la cartera, el más reciente primero. */
 export function fetchTransfers(portfolioId: string): Promise<Transfer[]> {
+  if (USE_MOCK) {
+    return Promise.resolve(transfersMockData as Transfer[]);
+  }
   return apiClient.get<Transfer[]>(
     `/portfolios/${encodeURIComponent(portfolioId)}/transfers`,
   );
