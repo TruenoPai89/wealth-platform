@@ -107,7 +107,6 @@ export function RebalanceOrdersPanel({ plan }: { plan: RebalancePlan }) {
                         isBuy ? "text-semantic-gain" : "text-semantic-loss"
                       }`}
                     >
-                      {isBuy ? "+" : "-"}
                       {formatEur(o.amount)}
                     </td>
                   </tr>
@@ -119,8 +118,8 @@ export function RebalanceOrdersPanel({ plan }: { plan: RebalancePlan }) {
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 px-5 py-4 bg-surface-overlay/30">
-        <SummaryItem label="Total a comprar" value={`+${formatEur(cashFlow.buyTotal)}`} tone="gain" />
-        <SummaryItem label="Total a vender" value={`-${formatEur(cashFlow.sellTotal)}`} tone="loss" />
+        <SummaryItem label="Total a comprar" value={formatEur(cashFlow.buyTotal)} tone="gain" />
+        <SummaryItem label="Total a vender" value={formatEur(cashFlow.sellTotal)} tone="loss" />
         <SummaryItem label="Flujo neto de caja" value={formatEur(cashFlow.netCashFlow)} />
         <SummaryItem label="Caja antes" value={formatEur(cashFlow.cashBefore)} />
         <SummaryItem label="Caja después" value={formatEur(cashFlow.cashAfter)} />

@@ -30,17 +30,18 @@ function NumberField(props: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  className?: string;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-xs text-gray-400">
-      {props.label}
+    <label className={`flex flex-col gap-1 text-xs text-gray-500 ${props.className ?? ""}`}>
+      <span className="flex min-h-[2rem] items-end leading-4">{props.label}</span>
       <input
         type="number"
         min="0"
         step="any"
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
-        className="rounded-md bg-surface-overlay border border-surface-border px-3 py-2 text-sm text-white"
+        className="rounded-md bg-surface-overlay border border-surface-border px-3 py-2 text-sm text-fg"
       />
     </label>
   );
@@ -92,18 +93,18 @@ export function IrpfSalePanel({ portfolioId = "PF-001" }: IrpfSalePanelProps) {
 
   return (
     <section className="mt-8 rounded-xl border border-surface-border bg-surface-raised p-6">
-      <h2 className="text-lg font-semibold text-white">Simulador IRPF de una venta</h2>
+      <h2 className="text-lg font-semibold text-fg">Simulador IRPF de una venta</h2>
       <p className="mt-1 text-sm text-gray-400">
         Calcula cómo cambia tu cuota del ahorro si vendes ahora. Simulación orientativa.
       </p>
 
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-5">
-        <label className="flex flex-col gap-1 text-xs text-gray-400 md:col-span-2">
-          Posición
+        <label className="flex flex-col gap-1 text-xs text-gray-500 md:col-span-2">
+          <span className="flex min-h-[2rem] items-end leading-4">Posición</span>
           <select
             value={isin}
             onChange={(e) => setIsin(e.target.value)}
-            className="rounded-md bg-surface-overlay border border-surface-border px-3 py-2 text-sm text-white"
+            className="rounded-md bg-surface-overlay border border-surface-border px-3 py-2 text-sm text-fg"
           >
             {POSITIONS.map((p) => (
               <option key={p.isin} value={p.isin}>
@@ -114,8 +115,7 @@ export function IrpfSalePanel({ portfolioId = "PF-001" }: IrpfSalePanelProps) {
         </label>
         <NumberField label="Participaciones" value={quantity} onChange={setQuantity} />
         <NumberField label="Precio de venta (EUR)" value={salePrice} onChange={setSalePrice} />
-        <div />
-        <NumberField label="Plusvalías ya realizadas este año" value={gains} onChange={setGains} />
+        <NumberField label="Plusvalías ya realizadas este año" value={gains} onChange={setGains} className="md:col-start-3" />
         <NumberField label="Minusvalías ya realizadas este año" value={losses} onChange={setLosses} />
       </div>
 

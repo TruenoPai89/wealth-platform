@@ -92,7 +92,7 @@ function TaxCard({ position }: TaxCardProps) {
       {/* Cabecera */}
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold text-white leading-tight">
+          <p className="text-sm font-semibold text-fg leading-tight">
             {position.name}
           </p>
           <p className="text-xs text-gray-500 mt-0.5 font-mono">
@@ -124,19 +124,19 @@ function TaxCard({ position }: TaxCardProps) {
       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
         <div>
           <span className="text-gray-500">Cantidad a vender</span>
-          <p className="font-mono text-white">{order.quantity.toLocaleString("es-ES", { maximumFractionDigits: 4 })} uds</p>
+          <p className="font-mono text-fg">{order.quantity.toLocaleString("es-ES", { maximumFractionDigits: 4 })} uds</p>
         </div>
         <div>
           <span className="text-gray-500">Precio actual</span>
-          <p className="font-mono text-white">{fmtEur(order.price)}</p>
+          <p className="font-mono text-fg">{fmtEur(order.price)}</p>
         </div>
         <div>
           <span className="text-gray-500">Importe venta</span>
-          <p className="font-mono text-white">{fmtEur(order.amount)}</p>
+          <p className="font-mono text-fg">{fmtEur(order.amount)}</p>
         </div>
         <div>
           <span className="text-gray-500">Lotes FIFO</span>
-          <p className="font-mono text-white">{hasData ? tax!.affectedLots : "—"}</p>
+          <p className="font-mono text-fg">{hasData ? tax!.affectedLots : "—"}</p>
         </div>
       </div>
 
@@ -249,13 +249,13 @@ export function TaxHarvestingDrawer({
               </svg>
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-white">Análisis Fiscal</h2>
+              <h2 className="text-sm font-semibold text-fg">Análisis Fiscal</h2>
               <p className="text-xs text-gray-500">Módulo 2 — Optimizador Fiscal</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-surface-overlay transition-colors"
+            className="p-1.5 rounded-lg text-gray-500 hover:text-fg hover:bg-surface-overlay transition-colors"
             aria-label="Cerrar panel fiscal"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -275,13 +275,13 @@ export function TaxHarvestingDrawer({
           <div className="bg-surface-raised px-4 py-3 text-center">
             <p className="text-xs text-gray-500 mb-1">Harvesting</p>
             <p className={`font-mono font-bold text-sm ${totalHarvestable > 0 ? "text-semantic-gain" : "text-gray-400"}`}>
-              {totalHarvestable > 0 ? fmtEur(totalHarvestable) : "—"}
+              {totalHarvestable > 0 ? fmtEur(totalHarvestable) : "0,00 €"}
             </p>
           </div>
           <div className="bg-surface-raised px-4 py-3 text-center">
             <p className="text-xs text-gray-500 mb-1">Alertas 2M</p>
             <p className={`font-mono font-bold text-sm ${violationsCount > 0 ? "text-semantic-warning" : "text-gray-400"}`}>
-              {violationsCount > 0 ? `${violationsCount}` : "—"}
+              {violationsCount > 0 ? `${violationsCount}` : "0"}
             </p>
           </div>
         </div>

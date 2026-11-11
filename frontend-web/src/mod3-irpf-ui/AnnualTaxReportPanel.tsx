@@ -148,12 +148,12 @@ export function AnnualTaxReportPanel({ portfolioId = "PF-001", fiscalYear = 2026
 
       {/* ── Saldos de años anteriores ────────────────────────────────────── */}
       <div className="mt-5 grid grid-cols-2 gap-4 md:max-w-md">
-        <label className="flex flex-col gap-1 text-xs text-gray-400">
-          Pérdidas pendientes de años anteriores: año
+        <label className="flex flex-col gap-1 text-xs text-gray-500">
+          <span className="flex min-h-[2rem] items-end leading-4">Pérdidas pendientes de años anteriores: año</span>
           <input type="number" value={carryYear} onChange={(e) => setCarryYear(e.target.value)} className={inputClass} />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-gray-400">
-          Importe pendiente (EUR)
+        <label className="flex flex-col gap-1 text-xs text-gray-500">
+          <span className="flex min-h-[2rem] items-end leading-4">Importe pendiente (EUR)</span>
           <input type="number" min="0" step="any" value={carryAmount} onChange={(e) => setCarryAmount(e.target.value)} className={inputClass} />
         </label>
       </div>
