@@ -1,203 +1,155 @@
 "use client";
 
 /**
- * VoiceAgentModal.tsx — «Llamar a mi Asesor de IA»: llamada de voz interactiva (ElevenLabs Conversational AI + Twilio).
+ * VoiceAgentModal.tsx — «Habla con tu Asesor de IA»: conversación de voz en el navegador (ElevenLabs, WebRTC).
  *
- * Flujo (el backend Java hace la llamada; la UI solo pide y muestra el estado REAL):
- *   1. TELÉFONO: el cliente escribe o confirma su número → «Recibir llamada ahora».
- *      POST /telephony/trigger-call (202 + conversationId). El número se valida/normaliza a E.164.
- *   2. MARCANDO («Marcando...»): ElevenLabs está llamando al teléfono.
- *   3. EN LLAMADA («En llamada con tu Cartera...»): el cliente ha descolgado y habla con el agente, que ya conoce su
- *      cartera (el agente pide GET /telephony/agent-context/{userId} al iniciar la voz).
- *   4. FINALIZADA («Llamada finalizada»), o fallida/sin respuesta, con opción de reintentar.
+ * Sin teléfono ni Twilio. Flujo:
+ *   1. El usuario pulsa «Empezar a hablar». Se pide permiso de micrófono.
+ *   2. El backend Java entrega un token de conversación de un solo uso (GET /voice/web-session). La API key de
+ *      ElevenLabs nunca llega al navegador y el agente sigue siendo privado.
+ *   3. El SDK @elevenlabs/react abre la sesión. El agente (Alex) llama a sus herramientas get_portfolio_context y
+ *      get_fund_dfi contra el backend (vía ngrok, con la cabecera secreta) y responde por voz.
+ *   4. «Colgar» o cerrar el modal termina la sesión (a diferencia de la llamada telefónica, aquí sí se cuelga).
  *
- * El estado se consulta con GET /telephony/calls/{id}/status cada 2,5 s; se deja de consultar al cerrar el modal o al
- * terminar. Si el proveedor tarda demasiado en conectar (90 s) se da por «sin respuesta». Al cerrar el modal NO se
- * cuelga la llamada en curso: el aviso lo dice claramente.
+ * La transcripción se muestra en pantalla: accesibilidad y, en la demo, el jurado ve qué entiende y qué responde.
  *
  * @module mod5-voice-ui/VoiceAgentModal
  */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  fetchCallStatus,
-  friendlyCallError,
-  maskPhone,
-  normalizePhone,
-  startVoiceCall,
-} from "@/core-ui/services/telephonyService";
-import type { RemoteCallStatus } from "@/core-ui/types/telephony";
+import { ConversationProvider, useConversation } from "@elevenlabs/react";
+import { fetchWebVoiceSession } from "@/core-ui/services/webVoiceService";
+import { friendlyCallError } from "@/core-ui/services/telephonyService";
 import { VoiceOrb, type OrbPhase } from "@/mod5-voice-ui/VoiceOrb";
 
-const POLL_MS = 2500;
-/** Máximo esperando a que el cliente descuelgue antes de darlo por «sin respuesta». */
-const DIAL_TIMEOUT_MS = 90_000;
-/** Fallos de consulta seguidos tolerados antes de mostrar error (un fallo suelto de red no debe romper la llamada). */
-const MAX_POLL_FAILURES = 4;
-const PHONE_STORAGE_KEY = "wealth.voice.phone";
-
-type Phase = "form" | "dialing" | "in_call" | "ended" | "failed";
-
 interface VoiceAgentModalProps {
-  /** Cliente (CLI-001) o cartera (PF-001) cuyo contexto conocerá el agente. */
+  /** Cliente (CLI-001) o cartera (PF-001) cuyo contexto conoce el agente. */
   userId: string;
-  /** Nombre mostrado en el texto de la llamada. */
+  /** Nombre mostrado en el texto de bienvenida. */
   clientName?: string;
-  /** Teléfono sugerido (si el cliente ya lo tiene registrado). */
+  /** Sin uso en la voz web; se mantiene por compatibilidad con la llamada telefónica. */
   defaultPhone?: string;
   onClose: () => void;
 }
 
-const STATUS_TEXT: Record<Exclude<Phase, "form">, { title: string; detail: string }> = {
-  dialing: {
-    title: "Marcando...",
-    detail: "Tu asesor de IA te está llamando. Descuelga tu teléfono para empezar.",
-  },
-  in_call: {
-    title: "En llamada con tu Cartera...",
-    detail: "Habla con tu asesor: ya conoce tus posiciones, tu liquidez y tus agrupaciones.",
-  },
-  ended: {
-    title: "Llamada finalizada",
-    detail: "Gracias por hablar con tu asesor de IA. Puedes volver a llamar cuando quieras.",
-  },
-  failed: {
-    title: "No se pudo completar la llamada",
-    detail: "",
-  },
-};
+interface Line {
+  id: number;
+  who: "user" | "ai";
+  text: string;
+}
 
-export function VoiceAgentModal({ userId, clientName, defaultPhone = "", onClose }: VoiceAgentModalProps) {
-  const [rawPhone, setRawPhone] = useState(defaultPhone);
-  const [phase, setPhase] = useState<Phase>("form");
-  const [submitting, setSubmitting] = useState(false);
+const MAX_LINES = 6;
+
+export function VoiceAgentModal(props: VoiceAgentModalProps) {
+  return (
+    <ConversationProvider>
+      <VoiceAgentDialog {...props} />
+    </ConversationProvider>
+  );
+}
+
+function VoiceAgentDialog({ userId, clientName, onClose }: VoiceAgentModalProps) {
   const [error, setError] = useState<string | null>(null);
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [dialedPhone, setDialedPhone] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  const [ended, setEnded] = useState(false);
+  const [lines, setLines] = useState<Line[]>([]);
   const [seconds, setSeconds] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const lineId = useRef(0);
 
-  const e164 = normalizePhone(rawPhone);
-  const phoneInvalid = rawPhone.trim() !== "" && e164 === null;
-  const callActive = phase === "dialing" || phase === "in_call";
+  const conversation = useConversation({
+    onMessage: ({ message, source }) => {
+      if (!message?.trim()) return;
+      lineId.current += 1;
+      const line: Line = { id: lineId.current, who: source === "user" ? "user" : "ai", text: message };
+      setLines((prev) => [...prev, line].slice(-MAX_LINES));
+    },
+    onError: (message) => {
+      setError(typeof message === "string" && message ? message : "Error en la conversación de voz.");
+    },
+    onDisconnect: () => setEnded(true),
+  });
 
-  // Teléfono recordado de la última vez (solo en este navegador) y foco al abrir.
+  const { status, isSpeaking, startSession, endSession } = conversation;
+  const connected = status === "connected";
+  const connecting = preparing || status === "connecting";
+
+  const phase: OrbPhase = error
+    ? "failed"
+    : connected
+      ? "in_call"
+      : connecting
+        ? "dialing"
+        : ended
+          ? "ended"
+          : "form";
+
+  // Cronómetro mientras hay conversación.
   useEffect(() => {
-    if (!defaultPhone) {
-      try {
-        const saved = window.localStorage.getItem(PHONE_STORAGE_KEY);
-        if (saved) setRawPhone(saved);
-      } catch {
-        /* localStorage no disponible (modo privado): se ignora */
-      }
-    }
-    inputRef.current?.focus();
-  }, [defaultPhone]);
-
-  // Esc cierra el modal (salvo mientras se envía la petición).
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && !submitting) onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [submitting, onClose]);
-
-  // Consulta del estado real mientras la llamada está activa. Se limpia al cerrar el modal o al cambiar de fase.
-  const reachedCall = useRef(false);
-  useEffect(() => {
-    if (!conversationId || !callActive) return;
-
-    let cancelled = false;
-    let failures = 0;
-    const startedAt = Date.now();
-
-    function applyRemoteStatus(status: RemoteCallStatus) {
-      if (status === "in_call") {
-        reachedCall.current = true;
-        setPhase("in_call");
-      } else if (status === "ended") {
-        if (reachedCall.current) {
-          setPhase("ended");
-        } else {
-          // Terminó sin llegar a estar en llamada: el cliente no descolgó (o rechazó la llamada).
-          setError("No se ha contestado la llamada. Comprueba tu teléfono e inténtalo de nuevo.");
-          setPhase("failed");
-        }
-      } else if (status === "failed") {
-        setError("La llamada ha fallado. Comprueba el número e inténtalo de nuevo.");
-        setPhase("failed");
-      } else if (Date.now() - startedAt > DIAL_TIMEOUT_MS) {
-        setError("Nadie ha contestado a la llamada. Inténtalo de nuevo.");
-        setPhase("failed");
-      }
-    }
-
-    async function poll() {
-      try {
-        const { status } = await fetchCallStatus(conversationId as string);
-        if (cancelled) return;
-        failures = 0;
-        applyRemoteStatus(status);
-      } catch (err) {
-        if (cancelled) return;
-        failures += 1;
-        if (failures >= MAX_POLL_FAILURES) {
-          setError(friendlyCallError(err));
-          setPhase("failed");
-        }
-      }
-    }
-
-    void poll();
-    const id = window.setInterval(() => void poll(), POLL_MS);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [conversationId, callActive]);
-
-  // Cronómetro de la conversación (solo mientras está en llamada).
-  useEffect(() => {
-    if (phase !== "in_call") return;
+    if (!connected) return;
     setSeconds(0);
     const id = window.setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => window.clearInterval(id);
-  }, [phase]);
+  }, [connected]);
 
-  const handleCall = useCallback(async () => {
-    if (e164 === null) return;
-    setSubmitting(true);
+  // Cerrar el modal (o desmontarlo) cuelga: no queda el micrófono abierto en segundo plano.
+  const endRef = useRef(endSession);
+  endRef.current = endSession;
+  useEffect(() => () => endRef.current(), []);
+
+  const handleClose = useCallback(() => {
+    endSession();
+    onClose();
+  }, [endSession, onClose]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") handleClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleClose]);
+
+  const handleStart = useCallback(async () => {
     setError(null);
-    reachedCall.current = false;
+    setEnded(false);
+    setLines([]);
+    setPreparing(true);
     try {
-      const started = await startVoiceCall({ phoneNumber: e164, userId });
       try {
-        window.localStorage.setItem(PHONE_STORAGE_KEY, rawPhone);
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop()); // solo era para pedir permiso; el SDK abre el suyo
       } catch {
-        /* se ignora */
+        setError("No hay acceso al micrófono. Permítelo en el navegador e inténtalo de nuevo.");
+        return;
       }
-      setDialedPhone(e164);
-      setConversationId(started.conversationId);
-      setPhase("dialing");
+      const session = await fetchWebVoiceSession(userId);
+      startSession({
+        conversationToken: session.conversationToken,
+        connectionType: "webrtc",
+        userId,
+        dynamicVariables: { user_id: userId },
+      });
     } catch (err) {
       setError(friendlyCallError(err));
     } finally {
-      setSubmitting(false);
+      setPreparing(false);
     }
-  }, [e164, rawPhone, userId]);
+  }, [startSession, userId]);
 
-  function retry() {
-    setConversationId(null);
-    setError(null);
-    setSeconds(0);
-    setPhase("form");
-    window.setTimeout(() => inputRef.current?.focus(), 0);
-  }
-
-  const text = phase === "form" ? null : STATUS_TEXT[phase];
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
   const ss = String(seconds % 60).padStart(2, "0");
+
+  const title = error
+    ? "No se pudo conectar"
+    : connected
+      ? isSpeaking
+        ? "Alex está hablando..."
+        : "Te escucho..."
+      : connecting
+        ? "Conectando con tu asesor..."
+        : ended
+          ? "Conversación finalizada"
+          : "Habla con tu Asesor de IA";
 
   return (
     <div
@@ -208,7 +160,6 @@ export function VoiceAgentModal({ userId, clientName, defaultPhone = "", onClose
       data-testid="voice-modal"
     >
       <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-surface-border bg-surface-raised shadow-2xl">
-        {/* Halo de marca detrás del orbe */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-brand-600/20 to-transparent"
           aria-hidden="true"
@@ -216,10 +167,9 @@ export function VoiceAgentModal({ userId, clientName, defaultPhone = "", onClose
 
         <button
           type="button"
-          onClick={onClose}
-          disabled={submitting}
+          onClick={handleClose}
           aria-label="Cerrar"
-          className="absolute right-3 top-3 z-10 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-surface-overlay hover:text-fg disabled:opacity-50"
+          className="absolute right-3 top-3 z-10 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-surface-overlay hover:text-fg"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
                strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -232,117 +182,62 @@ export function VoiceAgentModal({ userId, clientName, defaultPhone = "", onClose
           <VoiceOrb phase={phase} />
 
           <h2 id="voice-agent-title" className="mt-2 text-center text-lg font-semibold text-fg">
-            {phase === "form" ? "Habla con tu Asesor de IA" : text?.title}
+            {title}
           </h2>
 
-          {phase === "form" ? (
-            <p className="mt-1 text-center text-sm text-gray-500">
-              {clientName ? `${clientName}: ` : ""}te llamamos ahora y conversas por voz con un asesor que ya conoce tu
-              cartera, tu liquidez y tus agrupaciones.
-            </p>
-          ) : (
-            <p className="mt-1 text-center text-sm text-gray-500" aria-live="polite" data-testid="voice-status">
-              {phase === "failed" ? error : text?.detail}
-            </p>
-          )}
+          <p className="mt-1 text-center text-sm text-gray-500" aria-live="polite" data-testid="voice-status">
+            {error
+              ? error
+              : connected
+                ? `En conversación · ${mm}:${ss}`
+                : connecting
+                  ? "Preparando el micrófono y la conexión segura."
+                  : ended
+                    ? "Puedes volver a hablar con tu asesor cuando quieras."
+                    : `${clientName ? `${clientName}: ` : ""}habla por el micrófono con un asesor que ya conoce tu cartera, tu liquidez y tus agrupaciones.`}
+          </p>
 
-          {phase === "form" && (
-            <form
-              className="mt-5 flex flex-col gap-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void handleCall();
-              }}
+          {lines.length > 0 && (
+            <ul
+              className="mt-4 flex max-h-48 flex-col gap-2 overflow-y-auto rounded-lg bg-surface-overlay/40 p-3 text-sm"
+              aria-label="Transcripción"
+              data-testid="voice-transcript"
             >
-              <label htmlFor="voice-phone" className="text-xs font-medium text-gray-400">
-                Tu teléfono
-              </label>
-              <input
-                id="voice-phone"
-                ref={inputRef}
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                value={rawPhone}
-                onChange={(e) => setRawPhone(e.target.value)}
-                placeholder="+34 600 123 456"
-                aria-invalid={phoneInvalid}
-                aria-describedby="voice-phone-hint"
-                disabled={submitting}
-                className={`w-full rounded-lg border bg-surface-base px-3 py-2.5 font-mono text-sm text-fg placeholder:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
-                  phoneInvalid ? "border-semantic-loss/60" : "border-surface-border"
-                }`}
-              />
-              <p
-                id="voice-phone-hint"
-                className={`-mt-1 text-xs ${phoneInvalid ? "text-semantic-loss" : "text-gray-500"}`}
-              >
-                {phoneInvalid
-                  ? "Introduce un número válido, p. ej. +34 600 123 456."
-                  : e164
-                    ? `Llamaremos al ${maskPhone(e164)}.`
-                    : "Con prefijo internacional (+34 para España)."}
-              </p>
+              {lines.map((l) => (
+                <li key={l.id} className={l.who === "user" ? "text-right text-gray-400" : "text-left text-fg"}>
+                  <span className="mr-1 text-[11px] font-semibold uppercase text-gray-500">
+                    {l.who === "user" ? "Tú" : "Alex"}
+                  </span>
+                  {l.text}
+                </li>
+              ))}
+            </ul>
+          )}
 
-              {error && (
-                <p className="text-sm text-semantic-loss" role="alert">
-                  {error}
-                </p>
-              )}
-
+          <div className="mt-5 flex flex-col gap-3">
+            {connected ? (
               <button
-                type="submit"
-                disabled={submitting || e164 === null}
-                className="mt-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                type="button"
+                onClick={() => endSession()}
+                className="inline-flex items-center justify-center rounded-lg bg-semantic-loss px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90"
               >
-                {submitting ? "Solicitando llamada..." : "Recibir llamada ahora"}
+                Colgar
               </button>
-              <p className="text-center text-[11px] leading-snug text-gray-600">
-                Es un asistente de IA con fines informativos, no asesoramiento financiero personalizado. La llamada
-                puede quedar registrada por el proveedor de voz.
-              </p>
-            </form>
-          )}
-          {phase !== "form" && (
-            <div className="mt-5 flex flex-col gap-3">
-              {dialedPhone && (
-                <div className="flex items-center justify-between rounded-lg bg-surface-overlay/50 px-3 py-2 text-sm">
-                  <span className="text-gray-500">{phase === "dialing" ? "Llamando al" : "Número"}</span>
-                  <span className="font-mono text-fg">{maskPhone(dialedPhone)}</span>
-                  {phase === "in_call" && (
-                    <span className="font-mono text-semantic-gain" aria-label="Duración">
-                      {mm}:{ss}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {callActive && (
-                <p className="text-center text-[11px] leading-snug text-gray-600">
-                  Cerrar esta ventana no cuelga la llamada: para terminarla, cuelga desde tu teléfono.
-                </p>
-              )}
-
-              <div className="flex justify-end gap-2">
-                {(phase === "ended" || phase === "failed") && (
-                  <button
-                    type="button"
-                    onClick={retry}
-                    className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500"
-                  >
-                    {phase === "ended" ? "Llamar de nuevo" : "Reintentar"}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="rounded-lg bg-surface-overlay px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:text-fg"
-                >
-                  {callActive ? "Cerrar ventana" : "Cerrar"}
-                </button>
-              </div>
-            </div>
-          )}
+            ) : (
+              <button
+                type="button"
+                onClick={() => void handleStart()}
+                disabled={connecting}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              >
+                {connecting ? "Conectando..." : ended || error ? "Volver a hablar" : "Empezar a hablar"}
+              </button>
+            )}
+            <p className="text-center text-[11px] leading-snug text-gray-600">
+              Asistente de IA con fines informativos, no asesoramiento financiero personalizado. La conversación puede
+              quedar registrada por el proveedor de voz.
+            </p>
+          </div>
         </div>
       </div>
     </div>
