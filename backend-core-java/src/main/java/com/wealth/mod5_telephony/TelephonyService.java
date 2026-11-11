@@ -98,10 +98,14 @@ public class TelephonyService {
 
     // ── Contexto para el agente de voz ──
 
-    /** Comprueba la cabecera secreta del webhook. Sin secreto configurado se permite (desarrollo local). */
+    /**
+     * Comprueba la cabecera secreta del webhook. Sin secreto configurado el webhook queda CERRADO (503): el backend
+     * se expone por ngrok y devuelve datos de cartera, asi que "sin secreto" nunca puede significar "abierto".
+     */
     public void verifyWebhookSecret(String provided) {
         if (!properties.webhookSecretConfigured()) {
-            return;
+            throw new TelephonyException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "El webhook no está configurado en el servidor (falta TELEPHONY_WEBHOOK_SECRET).");
         }
         byte[] expected = properties.webhookSecret().getBytes(StandardCharsets.UTF_8);
         byte[] actual = (provided == null ? "" : provided).getBytes(StandardCharsets.UTF_8);

@@ -42,7 +42,7 @@ wealth:
       timeout-ms: 10000
       ringing-timeout-secs: 45
     # Secreto compartido: ElevenLabs lo envia en la cabecera X-Telephony-Secret al pedir /agent-context/{userId}.
-    # Vacio = sin comprobacion (solo desarrollo local). En produccion es OBLIGATORIO.
+    # Vacio = los webhooks responden 503 (cerrados). Obligatorio para usar la voz.
     webhook-secret: ${TELEPHONY_WEBHOOK_SECRET:}
     limits:
       per-number-cooldown-seconds: 60

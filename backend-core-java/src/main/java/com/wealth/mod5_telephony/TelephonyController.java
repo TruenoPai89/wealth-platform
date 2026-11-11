@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
  *   <li>POST /trigger-call: lanza la llamada saliente al telefono del cliente (202: la llamada es asincrona).</li>
  *   <li>GET  /calls/{conversationId}/status: estado real de la llamada (dialing, in_call, ended, failed), para la UI.</li>
  *   <li>GET  /agent-context/{userId}: contexto ultracompacto de la cartera para el agente de voz (webhook / server
- *       tool de ElevenLabs). Protegido por la cabecera X-Telephony-Secret si hay secreto configurado.</li>
+ *       tool de ElevenLabs). Protegido por la cabecera X-Telephony-Secret; sin secreto configurado responde 503.</li>
  *   <li>GET  /fund-dfi?isin_or_name=: ficha DFI de un fondo (TER, SRRI, politica) como segunda herramienta del agente.
  *       Misma cabecera secreta.</li>
  * </ul>
