@@ -31,7 +31,7 @@ const nextConfig = {
           // Desactiva funcionalidades del navegador no usadas por la plataforma
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            value: "camera=(), microphone=(self), geolocation=()",
           },
         ],
       },
