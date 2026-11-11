@@ -7,8 +7,6 @@
   "installCommand": "npm install",
   "outputDirectory": ".next",
 
-  "ignoreCommand": "git diff HEAD^ HEAD --name-only | grep -qvE '^frontend-web/'",
-
   "headers": [
     {
       "source": "/(.*)",

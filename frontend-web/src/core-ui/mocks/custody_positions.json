@@ -227,5 +227,94 @@
     "netCashFlow": 8290.47,
     "cashAfter": 63349.22,
     "targetCash": 62521.54
+  },
+  "performance": {
+    "totalValue": 1250430.75,
+    "totalCost": 1123456.00,
+    "unrealizedPnLAmount": 126974.75,
+    "unrealizedPnLPercent": 11.30
+  },
+  "projectedPositions": [
+    {
+      "instrumentId": "LU0323578657",
+      "isin": "LU0323578657",
+      "name": "Xtrackers MSCI World Minimum Volatility ETF",
+      "assetClass": "EQUITY",
+      "quantity": 1832.431,
+      "price": 34.12,
+      "marketValue": 62521.54,
+      "weight": 0.05,
+      "targetWeight": 0.05,
+      "deltaWeight": 0.0,
+      "costBasis": 54420.00,
+      "unrealizedPnLAmount": 8101.54,
+      "unrealizedPnLPercent": 14.89
+    },
+    {
+      "instrumentId": "IE00B4L5Y983",
+      "isin": "IE00B4L5Y983",
+      "name": "iShares Core MSCI World UCITS ETF",
+      "assetClass": "EQUITY",
+      "quantity": 7683.114,
+      "price": 97.65,
+      "marketValue": 750258.45,
+      "weight": 0.60,
+      "targetWeight": 0.60,
+      "deltaWeight": 0.0,
+      "costBasis": 632387.48,
+      "unrealizedPnLAmount": 117870.97,
+      "unrealizedPnLPercent": 18.64
+    },
+    {
+      "instrumentId": "IE00B3F81R35",
+      "isin": "IE00B3F81R35",
+      "name": "iShares Core UK Gilts UCITS ETF",
+      "assetClass": "FIXED_INCOME",
+      "quantity": 6117.568,
+      "price": 10.22,
+      "marketValue": 62521.54,
+      "weight": 0.05,
+      "targetWeight": 0.05,
+      "deltaWeight": 0.0,
+      "costBasis": 60257.98,
+      "unrealizedPnLAmount": 2263.56,
+      "unrealizedPnLPercent": 3.76
+    },
+    {
+      "instrumentId": "IE00B4WXJJ64",
+      "isin": "IE00B4WXJJ64",
+      "name": "iShares Core Euro Govt Bond UCITS ETF",
+      "assetClass": "FIXED_INCOME",
+      "quantity": 2800.0,
+      "price": 111.35,
+      "marketValue": 311780.00,
+      "weight": 0.249336,
+      "targetWeight": 0.25,
+      "deltaWeight": -0.000664,
+      "costBasis": 304920.00,
+      "unrealizedPnLAmount": 6860.00,
+      "unrealizedPnLPercent": 2.25
+    },
+    {
+      "instrumentId": "CASH:EUR",
+      "isin": null,
+      "name": "Cash EUR",
+      "assetClass": "CASH",
+      "quantity": 63349.22,
+      "price": 1.0,
+      "marketValue": 63349.22,
+      "weight": 0.050664,
+      "targetWeight": 0.05,
+      "deltaWeight": 0.000664,
+      "costBasis": 63349.22,
+      "unrealizedPnLAmount": 0.0,
+      "unrealizedPnLPercent": 0.0
+    }
+  ],
+  "projectedPerformance": {
+    "totalValue": 1250430.75,
+    "totalCost": 1115334.68,
+    "unrealizedPnLAmount": 135096.07,
+    "unrealizedPnLPercent": 12.11
   }
 }

@@ -1,0 +1,28 @@
+CONTRATO DE PIGNORACIÓN DE VALORES — PRÉSTAMO LOMBARDO
+Referencia: PLEDGE-2024-001 / LOAN-2024-087
+
+Entre BANCA PRIVADA DEMO, S.A. (en adelante, "el Prestamista") y la Familia Mendoza Ruiz (en adelante, "el Prestatario").
+
+CONDICIONES ECONÓMICAS
+
+1. IMPORTE DEL PRÉSTAMO: 65.000,00 EUR
+
+2. RATIO LOAN-TO-VALUE (LTV)
+   El Préstamo no podrá superar en ningún momento el 65% (LTV máximo = 0,65) del valor de mercado de los activos pignorados, calculado diariamente. En caso de superar dicho límite, el Prestatario dispondrá de un plazo para regularizar la situación.
+
+3. MARGIN CALL
+   Si el LTV alcanza o supera el 75% (LTV margin call = 0,75), el Prestamista podrá exigir de forma inmediata la reposición de garantías o la amortización parcial del préstamo.
+
+4. PLAZO DE REPOSICIÓN
+   El Prestatario dispondrá de 5 días hábiles (plazo_reposicion = 5) desde la notificación de margin call para reponer las garantías o reducir el saldo vivo del préstamo.
+
+5. HAIRCUTS APLICABLES POR CLASE DE ACTIVO
+   - Renta Variable (EQUITY): 20% de descuento sobre valor de mercado (haircut = 0,20)
+   - Renta Fija (FIXED_INCOME): 10% de descuento sobre valor de mercado (haircut = 0,10)
+   - Materias Primas / Commodities (COMMODITY): 30% de descuento sobre valor de mercado (haircut = 0,30)
+   - Efectivo (CASH): sin descuento (haircut = 0,00)
+
+ACTIVOS PIGNORADOS
+Los activos pignorados son los valores en custodia de la cartera PF-001, con la composición detallada en el Anexo I adjunto.
+
+Firmado en Madrid, a 15 de enero de 2024.

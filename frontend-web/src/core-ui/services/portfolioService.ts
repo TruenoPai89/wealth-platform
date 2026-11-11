@@ -12,6 +12,11 @@
 
 import { apiClient } from "@/core-ui/api/apiClient";
 import { fetchRebalancePlan as fetchMockPlan } from "@/core-ui/services/mockPortfolioService";
+import {
+  getMockTransfers,
+  addMockRebalanceTransfers,
+  settleMockTransfers,
+} from "@/core-ui/services/mockTransferStore";
 import type { RebalancePlan } from "@/core-ui/types/rebalancePlan";
 import type { RebalanceExecution, Transfer } from "@/core-ui/types/transfers";
 import type {
@@ -88,9 +93,37 @@ export function executeRebalance(portfolioId: string): Promise<RebalanceExecutio
 
 /** Historial de movimientos de la cartera, el más reciente primero. */
 export function fetchTransfers(portfolioId: string): Promise<Transfer[]> {
+  if (USE_MOCK) {
+    // Devuelve el store en memoria: empieza vacío y crece con cada rebalanceo simulado
+    return Promise.resolve(getMockTransfers());
+  }
   return apiClient.get<Transfer[]>(
     `/portfolios/${encodeURIComponent(portfolioId)}/transfers`,
   );
+}
+
+/**
+ * Simula la ejecución del rebalanceo en modo mock:
+ * genera las transferencias en el store de sesión y las devuelve
+ * con el mismo contrato que el backend real (RebalanceExecution).
+ */
+export function mockExecuteRebalance(plan: RebalancePlan): RebalanceExecution {
+  const transfers = addMockRebalanceTransfers(
+    plan.portfolioId,
+    plan.orders,
+    plan.cashFlow.netCashFlow,
+  );
+  // Simula liquidación T+2 después de 3 segundos para que el badge "En proceso" sea visible
+  setTimeout(() => settleMockTransfers(), 3000);
+
+  return {
+    executionId: transfers[0]?.executionId ?? "MOCK-EXEC-0001",
+    portfolioId: plan.portfolioId,
+    executedAt: new Date().toISOString(),
+    journalReference: `JNL-REF-${Date.now()}`,
+    transfers,
+    cashFlow: plan.cashFlow,
+  };
 }
 
 /**

@@ -31,6 +31,7 @@ import {
   executeRebalance,
   fetchBaskets,
   loadPortfolio,
+  mockExecuteRebalance,
   updateTargets,
   USE_MOCK,
 } from "@/core-ui/services/portfolioService";
@@ -48,6 +49,7 @@ import { PositionsTableWithSlots } from "@/mod1-rebalancer-ui/PositionsTableWith
 import { RebalanceOrdersPanel } from "@/mod1-rebalancer-ui/RebalanceOrdersPanel";
 import { TargetWeightsEditor } from "@/mod1-rebalancer-ui/TargetWeightsEditor";
 import { TaxModuleBootstrap } from "@/mod2-tax-ui/TaxModuleBootstrap";
+import { VoiceAgentModal } from "@/mod5-voice-ui/VoiceAgentModal";
 import type { AssetPosition } from "@/core-ui/types/portfolio";
 
 // ─── Hook: usePortfolio ───────────────────────────────────────────────────────
@@ -65,16 +67,18 @@ function usePortfolio(portfolioId: string) {
     error: null,
   });
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<RebalancePlan | null> => {
     // Se conservan los datos previos mientras recarga (evita que los paneles parpadeen).
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
       const plan = await loadPortfolio(portfolioId);
       setState({ plan, isLoading: false, error: null });
+      return plan;
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Error desconocido al cargar el plan.";
       setState({ plan: null, isLoading: false, error: message });
+      return null;
     }
   }, [portfolioId]);
 
@@ -115,6 +119,8 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
   const [baskets, setBaskets] = useState<Basket[]>([]);
   const [investing, setInvesting] = useState<Basket | null>(null);
   const [lastContribution, setLastContribution] = useState<ContributionExecution | null>(null);
+  // Llamada de voz con el asesor de IA (módulo 5)
+  const [voiceOpen, setVoiceOpen] = useState(false);
 
   // Las cestas no cambian al operar (solo su peso real), así que se cargan una vez. Sin backend (mock) no hay.
   useEffect(() => {
@@ -129,33 +135,52 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
   }, [portfolioId]);
 
   // La vista se deriva del plan en cada render: alternar no vuelve a llamar al backend.
-  // Si el Módulo 2 ha enriquecido las posiciones, se usan esas (con taxSummary).
+  // El Módulo 2 solo aporta el taxSummary de las posiciones con orden de VENTA: se superpone sobre las posiciones
+  // de la vista activa (actual o proyectada). Nunca se sustituyen las posiciones, o la vista proyectada
+  // (tabla y gráficos) quedaría anclada a la cartera actual.
   const displayPlan = useMemo(() => {
     if (!plan) return null;
     const base = toDisplayPlan(plan, viewMode);
-    if (!enrichedPositions) return base;
-    return { ...base, positions: enrichedPositions };
+    if (!enrichedPositions || viewMode === "projected") return base;
+    const taxById = new Map(enrichedPositions.map((p) => [p.instrumentId, p.taxSummary]));
+    return {
+      ...base,
+      positions: base.positions.map((p) => {
+        const taxSummary = p.order?.side === "SELL" ? taxById.get(p.instrumentId) : undefined;
+        return taxSummary ? { ...p, taxSummary } : p;
+      }),
+    };
   }, [plan, viewMode, enrichedPositions]);
 
   async function handleRebalance() {
-    if (USE_MOCK) {
-      await refetch();
-      return;
-    }
     setShowOrders(true);
     setLastExecution(null);
-    setViewMode("projected"); // al rebalancear se ve ya cómo quedan los pesos frente a la meta
-    await refetch();
-    setPreviewOpen(true); // pide confirmación (solo se pinta si el plan trae órdenes)
+    setViewMode("projected");
+    const freshPlan = await refetch();
+
+    if (USE_MOCK && freshPlan && freshPlan.orders.length > 0) {
+      // En mock: simula la ejecución directamente, sin modal de confirmación
+      const execution = mockExecuteRebalance(freshPlan);
+      setLastExecution(execution);
+    } else if (!USE_MOCK) {
+      setPreviewOpen(true); // pide confirmación real (solo con backend)
+    }
   }
 
   async function handleSaveTargets(weights: Record<string, number>) {
-    await updateTargets(portfolioId, weights); // lanza si el backend rechaza la meta
+    if (!USE_MOCK) {
+      await updateTargets(portfolioId, weights); // lanza si el backend rechaza la meta
+    }
     setEditingTargets(false);
     setShowOrders(true);
     setLastExecution(null);
     setViewMode("projected");
-    await refetch();
+    const freshPlan = await refetch();
+
+    if (USE_MOCK && freshPlan && freshPlan.orders.length > 0) {
+      const execution = mockExecuteRebalance(freshPlan);
+      setLastExecution(execution);
+    }
   }
 
   /** Acepta las órdenes: el backend las registra como transferencias y actualiza la cartera. */
@@ -205,7 +230,7 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
             <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" aria-hidden="true" />
             {USE_MOCK ? "Datos simulados (mock)" : "Backend en vivo"}
           </span>
-          {plan && !USE_MOCK && (
+          {plan && (
             <button
               type="button"
               onClick={() => setEditingTargets((v) => !v)}
@@ -222,13 +247,42 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
             className={`${BUTTON_BASE} btn-primary`}
           >
             <RefreshIcon spinning={isLoading} />
-            {isLoading ? "Cargando..." : USE_MOCK ? "Actualizar" : "Rebalancear"}
+            {isLoading ? "Cargando..." : "Rebalancear"}
           </button>
         </div>
       </div>
 
+      {/* Llamada de voz: el asesor de IA llama al cliente y ya conoce su cartera. Requiere backend (no en mock). */}
+      {!USE_MOCK && (
+        <button
+          type="button"
+          onClick={() => setVoiceOpen(true)}
+          data-testid="call-advisor"
+          className="group relative flex w-full items-center gap-4 overflow-hidden rounded-xl border border-brand-500/40 bg-gradient-to-r from-brand-600/20 via-brand-600/10 to-transparent px-5 py-4 text-left transition-colors hover:border-brand-400/70 hover:from-brand-600/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
+          <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg shadow-brand-600/30">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-semibold text-fg">Llamar a mi Asesor de IA</span>
+            <span className="block text-sm text-gray-500">
+              Conversa por voz sobre tu cartera, tu liquidez y tus agrupaciones. Te llamamos al momento.
+            </span>
+          </span>
+          <span className="hidden shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white transition-colors group-hover:bg-brand-500 sm:block">
+            Llamar ahora
+          </span>
+        </button>
+      )}
+
+      {voiceOpen && (
+        <VoiceAgentModal userId="CLI-001" clientName="Familia Mendoza Ruiz" onClose={() => setVoiceOpen(false)} />
+      )}
+
       {/* Editor de la meta de balanceo (el cliente fija el % objetivo de cada activo) */}
-      {plan && !USE_MOCK && editingTargets && (
+      {plan && editingTargets && (
         <TargetWeightsEditor
           positions={plan.positions}
           onSave={handleSaveTargets}
@@ -279,9 +333,9 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
       )}
 
       {/* Órdenes de compra/venta resultantes del rebalanceo */}
-      {plan && !USE_MOCK && showOrders && !error && <RebalanceOrdersPanel plan={plan} />}
+      {plan && showOrders && !error && <RebalanceOrdersPanel plan={plan} />}
 
-      {/* Confirmación. Sin órdenes (ya está en su meta, p. ej. tras ejecutar) no se abre: evita un modal vacío. */}
+      {/* Confirmación. Solo con backend real: en mock no hay ejecución. */}
       {plan && !USE_MOCK && previewOpen && !error && !isLoading && plan.orders.length > 0 && (
         <OrderPreviewModal
           plan={plan}
@@ -293,7 +347,7 @@ export function RebalanceDashboard({ portfolioId = "PF-001" }: RebalanceDashboar
       )}
 
       {/* Alterna entre la cartera actual y la proyectada tras ejecutar las órdenes */}
-      {plan && !USE_MOCK && showOrders && !error && (
+      {plan && showOrders && !error && (
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <PortfolioViewToggle mode={viewMode} onChange={setViewMode} />
           <p className="text-sm text-gray-500" data-testid="view-caption">
