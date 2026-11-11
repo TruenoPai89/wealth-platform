@@ -1,0 +1,31 @@
+{
+  "_comment": "MOCK ilustrativo de fichas DFI/KID (TER y SRRI aproximados). NO son los datos oficiales: sustituir por el KID real de cada fondo antes de usarlo con clientes. Las claves son los ISIN de la cartera PF-001.",
+  "IE00B4L5Y983": {
+    "name": "iShares Core MSCI World",
+    "aliases": ["msci world", "world", "renta variable global", "global"],
+    "terPct": "0.20",
+    "srri": 6,
+    "policy": "Replica el índice MSCI World: renta variable de mercados desarrollados de todo el mundo."
+  },
+  "IE00B3XXRP09": {
+    "name": "Vanguard S&P 500",
+    "aliases": ["sp500", "s&p", "standard and poors", "estados unidos", "eeuu", "usa"],
+    "terPct": "0.07",
+    "srri": 6,
+    "policy": "Replica el índice S&P 500: las 500 mayores compañías cotizadas de Estados Unidos."
+  },
+  "IE00B4WXJJ64": {
+    "name": "iShares Core Euro Govt Bond",
+    "aliases": ["bonos", "renta fija", "deuda publica", "bonos del estado", "euro govt"],
+    "terPct": "0.09",
+    "srri": 3,
+    "policy": "Replica un índice de deuda pública emitida en euros por gobiernos de la zona euro."
+  },
+  "IE00B579F325": {
+    "name": "Invesco Physical Gold",
+    "aliases": ["oro", "gold", "materias primas", "commodity"],
+    "terPct": "0.12",
+    "srri": 5,
+    "policy": "Respaldado por oro físico: sigue el precio del oro, sin generar rentas."
+  }
+}
